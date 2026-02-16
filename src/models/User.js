@@ -31,11 +31,32 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    facebookId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     password: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    refreshToken: { type: DataTypes.STRING, allowNull: true },
+    dateOfBirth: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      // defaultValue: DataTypes.DATE,
+    },
+    refreshToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    profilePicURL: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    userRole: {
+      type: DataTypes.ENUM("user", "admin"),
+      allowNull: false,
+      defaultValue: "user",
+    },
     createdAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

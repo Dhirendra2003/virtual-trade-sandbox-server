@@ -64,6 +64,67 @@ router.get(
   },
 );
 
+////////////////////////////////////////////////////////////////////////////////
+
+// Redirect to FB login
+// this will be called by frontend and will open FB page -- done by passport
+router.get(
+  "/facebook",
+  passport.authenticate("facebook", { scope: ["email", "public_profile"] }),
+);
+
+// Callback route
+// this will be called by FB and will redirect to frontend -- done by FB api
+router.get(
+  "/facebook/callback",
+  passport.authenticate("facebook", {
+    session: false,
+    failureRedirect: "/authenticate/login",
+  }),
+  async (req, res) => {
+    try {
+      const user = req.user;
+
+      // 1. Generate tokens
+      const accessToken = getAccessToken(user.id, user.email);
+      const refreshToken = getRefreshToken(user.id, user.email);
+
+      // 2. Save refresh token to user in DB
+      user.refreshToken = refreshToken;
+      await user.save();
+
+      // 3. Set cookies (using same options as your login controller)
+      const isProduction = process.env.NODE_ENV === "production";
+
+      res.cookie("accesstoken", accessToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "lax",
+        maxAge: 1 * 60 * 1000, // 1 minute
+      });
+
+      res.cookie("refreshtoken", refreshToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
+      // 4. Redirect to frontend
+      // Assuming frontend is running on localhost:5173
+      res.redirect(
+        process.env.FRONTEND_URL + "/authenticate/facebook" ||
+          "http://localhost:5173/authenticate/facebook",
+      );
+    } catch (error) {
+      console.log("Facebook login error:", error);
+      res.redirect(
+        `${process.env.FRONTEND_URL || "http://localhost:5173"}/authenticate/facebook?error=facebook_failed`,
+      );
+    }
+  },
+);
+
 router.get("/check", checkLoggedIn, (req, res) => {
   res.json({ message: "ok", user: req.user });
 });

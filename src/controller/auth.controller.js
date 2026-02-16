@@ -4,13 +4,13 @@ import bcrypt from "bcrypt";
 import { getAccessToken, getRefreshToken } from "../utils/generateTokens.js";
 
 export const register = async (req, resp) => {
-  const { name, email, password, phone } = req.body;
-  if (!name || !email || !password || !phone) {
+  const { username, email, password, phone, dateofbirth } = req.body;
+  if (!username || !email || !password || !dateofbirth) {
     return resp
       .status(401)
       .json({ message: "something is missing", success: false });
   }
-  console.log(name, email, password, phone);
+  console.log(username, email, password, phone, dateofbirth);
   const userExist = await User.findOne({ where: { email: email } });
   if (userExist) {
     return resp
@@ -20,14 +20,36 @@ export const register = async (req, resp) => {
   //hash the password before storing in db
   const hashedPassword = await bcrypt.hash(password, 10);
   const user = await User.create({
-    name: name,
+    name: username,
     email: email,
     password: hashedPassword,
     phone: phone,
+    dateOfBirth: dateofbirth,
   });
+  const accessToken = getAccessToken(user.id, user.email);
+  const refreshToken = getRefreshToken(user.id, user.email);
+
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  const userObject = user.toJSON();
+  delete userObject.password;
+  delete userObject.refreshToken;
   return resp
     .status(200)
-    .json({ user: user, message: "user registered", success: true });
+    .cookie("accesstoken", accessToken, {
+      httpOnly: true,
+      secure: false, // Only send cookie over HTTPS
+      sameSite: "lax", // Allows cross-origin requests
+      maxAge: 1 * 60 * 1000,
+    })
+    .cookie("refreshtoken", refreshToken, {
+      httpOnly: true,
+      secure: false, // Only send cookie over HTTPS
+      sameSite: "lax", // Allows cross-origin requests
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    })
+    .json({ user: userObject, message: "user registered", success: true });
 };
 
 export const login = async (req, resp) => {
@@ -49,7 +71,7 @@ export const login = async (req, resp) => {
       user.refreshToken = refreshToken;
       await user.save();
 
-      const userObject = user.toJSON(); //mongoose document to plain js object
+      const userObject = user.toJSON();
       delete userObject.password;
       delete userObject.refreshToken;
 
