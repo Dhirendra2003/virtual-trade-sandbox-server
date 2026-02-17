@@ -8,9 +8,10 @@ import oauthRoute from "./routes/oauth.routes.js";
 import "./utils/passport.js";
 import errorHandler from "./middleware/errorHandler.middleware.js";
 import CustomError from "./utils/errorClass.js";
+import { ENV_VARIABLES } from "./utils/constants.js";
 
 const app = express();
-const frontendURL = process.env.FRONTEND_URL;
+const frontendURL = ENV_VARIABLES.FRONTEND_URL;
 
 app.use(express.json());
 app.use(cookieParser());

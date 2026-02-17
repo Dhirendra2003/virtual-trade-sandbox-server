@@ -1,6 +1,7 @@
 import "dotenv/config";
 import DatabaseManager from "./src/config/DatabaseManager.js";
 import app from "./src/app.js";
+import { ENV_VARIABLES } from "./src/utils/constants.js";
 
 // Import models
 import "./src/models/User.js";
@@ -9,7 +10,7 @@ import "./src/models/stock.js";
 // Connect to Database and then start server
 DatabaseManager.connect()
   .then(() => {
-    const PORT = process.env.PORT || 3000;
+    const PORT = ENV_VARIABLES.PORT || 3000;
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });

@@ -1,17 +1,16 @@
 import jwt from "jsonwebtoken";
+import { ENV_VARIABLES } from "../utils/constants.js";
 const checkLoggedIn = async (req, response, next) => {
   try {
     const accesstoken = req.cookies.accesstoken;
     if (!accesstoken) {
-      return response
-        .status(401)
-        .json({
-          message: "user not authenticated",
-          success: false,
-          tokenExpired: true,
-        });
+      return response.status(401).json({
+        message: "user not authenticated",
+        success: false,
+        tokenExpired: true,
+      });
     }
-    const decoded = jwt.verify(accesstoken, process.env.ACC_JWT_SECRET);
+    const decoded = jwt.verify(accesstoken, ENV_VARIABLES.ACC_JWT_SECRET);
     if (!decoded) {
       return response
         .status(401)

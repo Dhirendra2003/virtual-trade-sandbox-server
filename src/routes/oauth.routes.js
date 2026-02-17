@@ -2,6 +2,7 @@ import express from "express";
 import passport from "passport";
 import checkLoggedIn from "../middleware/auth.middleware.js";
 import { getAccessToken, getRefreshToken } from "../utils/generateTokens.js";
+import { COOKIE_OPTIONS, ENV_VARIABLES } from "../utils/constants.js";
 
 const router = express.Router();
 
@@ -33,32 +34,27 @@ router.get(
       await user.save();
 
       // 3. Set cookies (using same options as your login controller)
-      const isProduction = process.env.NODE_ENV === "production";
-
-      res.cookie("accesstoken", accessToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "lax",
-        maxAge: 1 * 60 * 1000, // 1 minute
-      });
-
-      res.cookie("refreshtoken", refreshToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+      res.cookie(
+        "accesstoken",
+        accessToken,
+        COOKIE_OPTIONS.ACCESS_TOKEN_COOKIE_OPTIONS,
+      );
+      res.cookie(
+        "refreshtoken",
+        refreshToken,
+        COOKIE_OPTIONS.REFRESH_TOKEN_COOKIE_OPTIONS,
+      );
 
       // 4. Redirect to frontend
       // Assuming frontend is running on localhost:5173
       res.redirect(
-        process.env.FRONTEND_URL + "/authenticate/google" ||
+        ENV_VARIABLES.FRONTEND_URL + "/authenticate/google" ||
           "http://localhost:5173/authenticate/google",
       );
     } catch (error) {
       console.log("Google login error:", error);
       res.redirect(
-        `${process.env.FRONTEND_URL || "http://localhost:5173"}/authenticate/google?error=google_failed`,
+        `${ENV_VARIABLES.FRONTEND_URL || "http://localhost:5173"}/authenticate/google?error=google_failed`,
       );
     }
   },
@@ -94,32 +90,27 @@ router.get(
       await user.save();
 
       // 3. Set cookies (using same options as your login controller)
-      const isProduction = process.env.NODE_ENV === "production";
-
-      res.cookie("accesstoken", accessToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "lax",
-        maxAge: 1 * 60 * 1000, // 1 minute
-      });
-
-      res.cookie("refreshtoken", refreshToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+      res.cookie(
+        "accesstoken",
+        accessToken,
+        COOKIE_OPTIONS.ACCESS_TOKEN_COOKIE_OPTIONS,
+      );
+      res.cookie(
+        "refreshtoken",
+        refreshToken,
+        COOKIE_OPTIONS.REFRESH_TOKEN_COOKIE_OPTIONS,
+      );
 
       // 4. Redirect to frontend
       // Assuming frontend is running on localhost:5173
       res.redirect(
-        process.env.FRONTEND_URL + "/authenticate/facebook" ||
+        ENV_VARIABLES.FRONTEND_URL + "/authenticate/facebook" ||
           "http://localhost:5173/authenticate/facebook",
       );
     } catch (error) {
       console.log("Facebook login error:", error);
       res.redirect(
-        `${process.env.FRONTEND_URL || "http://localhost:5173"}/authenticate/facebook?error=facebook_failed`,
+        `${ENV_VARIABLES.FRONTEND_URL || "http://localhost:5173"}/authenticate/facebook?error=facebook_failed`,
       );
     }
   },

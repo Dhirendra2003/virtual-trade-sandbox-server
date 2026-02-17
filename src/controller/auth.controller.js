@@ -1,3 +1,4 @@
+import { ENV_VARIABLES } from "../utils/constants.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
@@ -63,38 +64,47 @@ export const login = async (req, resp) => {
   const user = await User.findOne({ where: { email: email } });
   if (!user) {
     return resp.status(404).json({ message: "user not found", success: false });
+  }
+
+  // Check if user has a password (might be null for OAuth users)
+  if (!user.password && (user.facebookId || user.googleId)) {
+    return resp.status(400).json({
+      message:
+        "This account was created using social login. Please login with Google or Facebook.",
+      success: false,
+    });
+  }
+
+  if (bcrypt.compareSync(password, user.password)) {
+    const accessToken = getAccessToken(user.id, user.email);
+    const refreshToken = getRefreshToken(user.id, user.email);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    const userObject = user.toJSON();
+    delete userObject.password;
+    delete userObject.refreshToken;
+
+    return resp
+      .status(200)
+      .cookie("accesstoken", accessToken, {
+        httpOnly: true,
+        secure: false, // Only send cookie over HTTPS
+        sameSite: "lax", // Allows cross-origin requests
+        maxAge: 1 * 60 * 1000,
+      })
+      .cookie("refreshtoken", refreshToken, {
+        httpOnly: true,
+        secure: false, // Only send cookie over HTTPS
+        sameSite: "lax", // Allows cross-origin requests
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      })
+      .json({ user: userObject, message: "login success", success: true });
   } else {
-    if (bcrypt.compareSync(password, user.password)) {
-      const accessToken = getAccessToken(user.id, user.email);
-      const refreshToken = getRefreshToken(user.id, user.email);
-
-      user.refreshToken = refreshToken;
-      await user.save();
-
-      const userObject = user.toJSON();
-      delete userObject.password;
-      delete userObject.refreshToken;
-
-      return resp
-        .status(200)
-        .cookie("accesstoken", accessToken, {
-          httpOnly: true,
-          secure: false, // Only send cookie over HTTPS
-          sameSite: "lax", // Allows cross-origin requests
-          maxAge: 1 * 60 * 1000,
-        })
-        .cookie("refreshtoken", refreshToken, {
-          httpOnly: true,
-          secure: false, // Only send cookie over HTTPS
-          sameSite: "lax", // Allows cross-origin requests
-          maxAge: 7 * 24 * 60 * 60 * 1000,
-        })
-        .json({ user: userObject, message: "login success", success: true });
-    } else {
-      return resp
-        .status(401)
-        .json({ message: "password do not match", success: false });
-    }
+    return resp
+      .status(401)
+      .json({ message: "password do not match", success: false });
   }
 };
 
@@ -123,7 +133,7 @@ export const refreshAccessToken = async (req, resp) => {
         .json({ message: "refresh token missing", success: false });
     }
     //if token exists
-    const decoded = jwt.verify(refreshToken, process.env.REF_JWT_SECRET);
+    const decoded = jwt.verify(refreshToken, ENV_VARIABLES.REF_JWT_SECRET);
     const user = await User.findOne({ where: { id: decoded.id } });
 
     if (!user || user.refreshToken !== refreshToken) {

@@ -1,10 +1,11 @@
 import jwt from "jsonwebtoken";
+import { ENV_VARIABLES } from "./constants.js";
 
 export const getAccessToken = (id, mail) => {
   const accessToken = jwt.sign(
     { id: id, email: mail },
-    process.env.ACC_JWT_SECRET,
-    { expiresIn: "1m" },
+    ENV_VARIABLES.ACC_JWT_SECRET,
+    { expiresIn: "15m" },
   );
   return accessToken;
 };
@@ -12,7 +13,7 @@ export const getAccessToken = (id, mail) => {
 export const getRefreshToken = (id, mail) => {
   const refreshToken = jwt.sign(
     { id: id, email: mail },
-    process.env.REF_JWT_SECRET,
+    ENV_VARIABLES.REF_JWT_SECRET,
     { expiresIn: "7d" },
   );
   return refreshToken;

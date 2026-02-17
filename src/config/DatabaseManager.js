@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize";
 import config from "./sequelize.cjs";
+import { ENV_VARIABLES } from "../utils/constants.js";
 
 class DatabaseManager {
   constructor() {
@@ -8,7 +9,7 @@ class DatabaseManager {
 
   initialize() {
     if (this.sequelize) return;
-    const env = process.env.NODE_ENV || "development";
+    const env = ENV_VARIABLES.NODE_ENV || "development";
     const dbConfig = config[env];
     this.sequelize = new Sequelize(
       dbConfig.database,
@@ -31,8 +32,8 @@ class DatabaseManager {
       console.log("Connection has been established successfully.");
 
       // Sync database tables based on models
-      const env = process.env.NODE_ENV || "development";
-      const syncing = process.env.SYNC_TABLES === "true";
+      const env = ENV_VARIABLES.NODE_ENV || "development";
+      const syncing = ENV_VARIABLES.SYNC_TABLES === "true";
 
       if (env === "development" && syncing) {
         // In development: alter tables to match models (safe, doesn't drop data)

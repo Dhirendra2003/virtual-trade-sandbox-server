@@ -9,7 +9,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:4000/api/v1/oauth/google/callback",
+      callbackURL: `${process.env.BACKEND_URL}/api/v1/oauth/google/callback`,
     },
     async function (accessToken, refreshToken, profile, cb) {
       try {
@@ -45,7 +45,7 @@ passport.use(
       clientID: process.env.FACEBOOK_APP_ID,
       clientSecret: process.env.FACEBOOK_APP_SECRET,
       profileFields: ["id", "displayName", "photos", "email"],
-      callbackURL: "http://localhost:4000/api/v1/oauth/facebook/callback",
+      callbackURL: `${process.env.BACKEND_URL}/api/v1/oauth/facebook/callback`,
     },
     async function (accessToken, refreshToken, profile, cb) {
       try {
