@@ -9,6 +9,7 @@ import "./utils/passport.js";
 import errorHandler from "./middleware/errorHandler.middleware.js";
 import CustomError from "./utils/errorClass.js";
 import { ENV_VARIABLES } from "./utils/constants.js";
+import stocksRoute from "./routes/stocks.routes.js";
 
 const app = express();
 const frontendURL = ENV_VARIABLES.FRONTEND_URL;
@@ -28,6 +29,7 @@ app.use(passport.initialize());
 //Routes
 app.use("/api/v1/oauth/", oauthRoute);
 app.use("/api/v1/user/", userRoute);
+app.use("/api/v1/stocks/", stocksRoute);
 
 app.get("/", (req, res) => {
   res.json("Hello, World!");

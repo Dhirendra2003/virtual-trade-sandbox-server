@@ -2,9 +2,9 @@ import "dotenv/config";
 const isProduction = process.env.NODE_ENV === "production";
 
 export const DURATIONS = {
-  ACCESS_TOKEN_DURATION: "15m",
+  ACCESS_TOKEN_DURATION: "30m",
   REFRESH_TOKEN_DURATION: "7d",
-  ACCESS_TOKEN_COOKIE_DURATION: 15 * 60 * 1000, // 15 minutes
+  ACCESS_TOKEN_COOKIE_DURATION: 30 * 60 * 1000, // 30 minutes
   REFRESH_TOKEN_COOKIE_DURATION: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
