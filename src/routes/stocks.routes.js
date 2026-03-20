@@ -1,4 +1,5 @@
 import {
+  getMarketStatus,
   getStockChartData,
   saveStocksData,
   searchStocks,
@@ -10,5 +11,6 @@ const stocksRoute = express.Router();
 stocksRoute.route("/save-stocks-data").put(saveStocksData);
 stocksRoute.route("/search-stocks").get(checkLoggedIn, searchStocks);
 stocksRoute.route("/get-stock-chart-data").get(getStockChartData);
+stocksRoute.route("/get-market-status").get(getMarketStatus);
 
 export default stocksRoute;

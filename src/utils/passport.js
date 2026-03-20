@@ -22,14 +22,20 @@ passport.use(
             user.googleId = profile.id; // link google id to existing user in case of email already exists in db
             await user.save();
           } else {
+            console.log("USER CREATED");
             user = await User.create({
               googleId: profile.id,
               name: profile.displayName,
               email: profile.emails[0].value,
-              // avatar: profile.photos[0].value,
+              profilePicURL: profile.photos[0].value,
             });
-            console.log("USER CREATED SUCCESSFULLY", user);
+            // console.log("PROFILE", profile);
+            // console.log("USER CREATED SUCCESSFULLY", user);
           }
+        } else {
+          //still update user pfp
+          user.profilePicURL = profile.photos[0].value;
+          await user.save();
         }
         return cb(null, user);
       } catch (error) {

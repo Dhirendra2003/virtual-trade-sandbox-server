@@ -1,6 +1,7 @@
 import Stock from "../models/Stock.js";
 import stocksData from "../data/NSE_MIS_Data.json" with { type: "json" };
 import { Op } from "sequelize";
+import moment from "moment";
 
 export const searchStocks = async (req, resp) => {
   const { search } = req.query;
@@ -64,11 +65,6 @@ export const getStockChartData = async (req, resp) => {
   }
   let days = new Set();
   let modifiedData = [];
-  console.log(
-    encodeURI(
-      `https://api.upstox.com/v3/historical-candle/${stockCode}/minutes/${timeFrame}/${to}/${from}`,
-    ),
-  );
   const data = await fetch(
     `https://api.upstox.com/v3/historical-candle/${stockCode}/minutes/${timeFrame}/${to}/${from}`,
   )
@@ -92,6 +88,33 @@ export const getStockChartData = async (req, resp) => {
   return resp
     .status(200)
     .json({ data: modifiedData, days: [...days], success: true }); // Spread Set → Array so JSON.stringify works
+};
+
+export const getMarketStatus = async (req, resp) => {
+  const data = await fetch(
+    `https://api.upstox.com/v2/market/timings/${moment().format("YYYY-MM-DD")}`,
+  )
+    .then((res) => res.json())
+    .then((res) => res);
+
+  if (data?.data.length === 0) {
+    return resp
+      .status(200)
+      .json({ isMarketOpen: false, message: "no data found", success: false });
+  }
+  const NSE_timeframe = data?.data?.find((item) => item.exchange === "NSE");
+  const current_time = new Date();
+  const start_time = new Date(NSE_timeframe.start_time);
+  const end_time = new Date(NSE_timeframe.end_time);
+  if (current_time > start_time && current_time < end_time) {
+    return resp
+      .status(200)
+      .json({ isMarketOpen: true, message: "market is open", success: false });
+  }
+
+  return resp
+    .status(200)
+    .json({ isMarketOpen: false, data: data, success: true });
 };
 
 export const saveStocksData = async (req, resp) => {
