@@ -69,10 +69,14 @@ passport.use(
               facebookId: profile.id,
               name: profile.displayName,
               email: profile.emails[0].value,
-              // avatar: profile.photos[0].value,
+              profilePicURL: profile.photos[0].value,
             });
             console.log("USER CREATED SUCCESSFULLY", user);
           }
+        } else {
+          //still update user pfp
+          user.profilePicURL = profile.photos[0].value;
+          await user.save();
         }
         return cb(null, user);
       } catch (error) {
