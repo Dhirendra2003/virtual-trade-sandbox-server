@@ -3,15 +3,18 @@ import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { getAccessToken, getRefreshToken } from "../utils/generateTokens.js";
+import cloudinary from "../utils/cloudinary.js";
 
 export const register = async (req, resp) => {
+  const imgresult = await cloudinary.uploader.upload(req.file.path);
+  console.log("### result", imgresult);
   const { username, email, password, phone, dateofbirth } = req.body;
   if (!username || !email || !password || !dateofbirth) {
     return resp
       .status(401)
       .json({ message: "something is missing", success: false });
   }
-  console.log(username, email, password, phone, dateofbirth);
+  // console.log(username, email, password, phone, dateofbirth);
   const userExist = await User.findOne({ where: { email: email } });
   if (userExist) {
     return resp
@@ -26,6 +29,7 @@ export const register = async (req, resp) => {
     password: hashedPassword,
     phone: phone,
     dateOfBirth: dateofbirth,
+    profilePicURL: imgresult.url,
   });
   const accessToken = getAccessToken(user.id, user.email);
   const refreshToken = getRefreshToken(user.id, user.email);

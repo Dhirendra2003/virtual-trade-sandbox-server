@@ -41,7 +41,7 @@ export const searchStocks = async (req, resp) => {
 
 export const getStockChartData = async (req, resp) => {
   const { stockCode, timeFrame, from, to } = req.query;
-  console.log(stockCode, timeFrame, from, to);
+  // console.log(stockCode, timeFrame, from, to);
   if (!stockCode || stockCode.length === 0) {
     return resp
       .status(400)
@@ -64,14 +64,19 @@ export const getStockChartData = async (req, resp) => {
   }
   let days = new Set();
   let modifiedData = [];
+  console.log(
+    encodeURI(
+      `https://api.upstox.com/v3/historical-candle/${stockCode}/minutes/${timeFrame}/${to}/${from}`,
+    ),
+  );
   const data = await fetch(
     `https://api.upstox.com/v3/historical-candle/${stockCode}/minutes/${timeFrame}/${to}/${from}`,
   )
     .then((responseData) => responseData.json())
     .then((responseData) => {
-      console.log("API Response:", responseData); // Debug log
+      // console.log("API Response:", responseData); // Debug log
       responseData?.data?.candles?.map((candle) => {
-        console.log(candle[0].slice(0, 10));
+        // console.log(candle[0].slice(0, 10));
         days.add(candle[0].slice(0, 10));
       });
       modifiedData = responseData?.data?.candles?.map((candle) => ({

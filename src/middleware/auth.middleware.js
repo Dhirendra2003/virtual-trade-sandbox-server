@@ -33,7 +33,7 @@ const checkLoggedIn = async (req, response, next) => {
     }
 
     console.log(error);
-    return response.status(403).json({
+    return response.status(401).json({
       message: "Invalid token",
       success: false,
     });

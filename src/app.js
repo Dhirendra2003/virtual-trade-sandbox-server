@@ -10,6 +10,7 @@ import errorHandler from "./middleware/errorHandler.middleware.js";
 import CustomError from "./utils/errorClass.js";
 import { ENV_VARIABLES } from "./utils/constants.js";
 import stocksRoute from "./routes/stocks.routes.js";
+import multer from "multer";
 
 const app = express();
 const frontendURL = ENV_VARIABLES.FRONTEND_URL;
@@ -23,7 +24,7 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 
 //Routes

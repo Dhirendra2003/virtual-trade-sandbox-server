@@ -5,7 +5,7 @@ import { ENV_VARIABLES } from "./src/utils/constants.js";
 
 // Import models
 import "./src/models/User.js";
-import "./src/models/stock.js";
+import "./src/models/Stock.js";
 
 // Connect to Database and then start server
 DatabaseManager.connect()
