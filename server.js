@@ -4,8 +4,16 @@ import app from "./src/app.js";
 import { ENV_VARIABLES } from "./src/utils/constants.js";
 
 // Import models
-import "./src/models/User.js";
-import "./src/models/Stock.js";
+import User from "./src/models/User.js";
+import Stock from "./src/models/Stock.js";
+import Watchlist from "./src/models/watchlist.js";
+
+// Define Associations
+User.hasMany(Watchlist, { foreignKey: "user_id" });
+Watchlist.belongsTo(User, { foreignKey: "user_id" });
+
+Stock.hasMany(Watchlist, { foreignKey: "instrument_key" });
+Watchlist.belongsTo(Stock, { foreignKey: "instrument_key" });
 
 // Connect to Database and then start server
 DatabaseManager.connect()

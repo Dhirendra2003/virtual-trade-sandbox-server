@@ -85,9 +85,17 @@ export const getStockChartData = async (req, resp) => {
       }));
       return { modifiedData, days };
     });
-  return resp
-    .status(200)
-    .json({ data: modifiedData, days: [...days], success: true }); // Spread Set → Array so JSON.stringify works
+  const stockDetails = await Stock.findOne({
+    where: {
+      instrument_key: stockCode,
+    },
+  });
+  return resp.status(200).json({
+    data: modifiedData,
+    days: [...days],
+    stockDetails: stockDetails && stockDetails,
+    success: true,
+  }); // Spread Set → Array so JSON.stringify works
 };
 
 export const getMarketStatus = async (req, resp) => {
@@ -115,6 +123,18 @@ export const getMarketStatus = async (req, resp) => {
   return resp
     .status(200)
     .json({ isMarketOpen: false, data: data, success: true });
+};
+
+export const getStockNews = async (req, resp) => {
+  const data = await fetch("https://stock.indianapi.in/news", {
+    headers: {
+      "X-Api-Key": process.env.INDIANAPI_KEY,
+    },
+  })
+    .then((res) => res.json())
+    .then((res) => res);
+
+  return resp.status(200).json({ data: data, success: true });
 };
 
 export const saveStocksData = async (req, resp) => {
