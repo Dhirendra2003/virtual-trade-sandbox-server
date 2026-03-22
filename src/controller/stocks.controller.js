@@ -2,6 +2,7 @@ import Stock from "../models/Stock.js";
 import stocksData from "../data/NSE_MIS_Data.json" with { type: "json" };
 import { Op } from "sequelize";
 import moment from "moment";
+import Watchlist from "../models/watchlist.js";
 
 export const searchStocks = async (req, resp) => {
   const { search } = req.query;
@@ -41,6 +42,8 @@ export const searchStocks = async (req, resp) => {
 };
 
 export const getStockChartData = async (req, resp) => {
+  const user = req.user;
+  // console.log(user);
   const { stockCode, timeFrame, from, to } = req.query;
   // console.log(stockCode, timeFrame, from, to);
   if (!stockCode || stockCode.length === 0) {
@@ -89,11 +92,21 @@ export const getStockChartData = async (req, resp) => {
     where: {
       instrument_key: stockCode,
     },
+    raw: true,
   });
+  const isAddedToWatchlist = await Watchlist.findOne({
+    where: {
+      instrument_key: stockCode,
+      user_id: user.id,
+    },
+    raw: true,
+  });
+  console.log(isAddedToWatchlist);
   return resp.status(200).json({
     data: modifiedData,
     days: [...days],
     stockDetails: stockDetails && stockDetails,
+    isAddedToWatchlist: isAddedToWatchlist ? true : false,
     success: true,
   }); // Spread Set → Array so JSON.stringify works
 };

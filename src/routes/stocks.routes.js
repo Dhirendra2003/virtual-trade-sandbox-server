@@ -12,7 +12,9 @@ const stocksRoute = express.Router();
 
 //auth required
 stocksRoute.route("/search-stocks").get(checkLoggedIn, searchStocks);
-stocksRoute.route("/get-stock-chart-data").get(getStockChartData);
+stocksRoute
+  .route("/get-stock-chart-data")
+  .get(checkLoggedIn, getStockChartData);
 stocksRoute.route("/get-stock-news").get(checkLoggedIn, getStockNews);
 
 //authless
