@@ -1,8 +1,17 @@
 import Stock from "../models/Stock.js";
 import stocksData from "../data/NSE_MIS_Data.json" with { type: "json" };
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import moment from "moment";
 import Watchlist from "../models/watchlist.js";
+import {
+  getHistoricalCandles,
+  // getMarketTimings,
+  getMarketStatusAPI,
+} from "../services/upstox.service.js";
+import {
+  fetchNews,
+  fetchTrendingStocks,
+} from "../services/indStockAPI.service.js";
 
 export const searchStocks = async (req, resp) => {
   const { search } = req.query;
@@ -43,9 +52,7 @@ export const searchStocks = async (req, resp) => {
 
 export const getStockChartData = async (req, resp) => {
   const user = req.user;
-  // console.log(user);
   const { stockCode, timeFrame, from, to } = req.query;
-  // console.log(stockCode, timeFrame, from, to);
   if (!stockCode || stockCode.length === 0) {
     return resp
       .status(400)
@@ -68,11 +75,8 @@ export const getStockChartData = async (req, resp) => {
   }
   let days = new Set();
   let modifiedData = [];
-  const data = await fetch(
-    `https://api.upstox.com/v3/historical-candle/${stockCode}/minutes/${timeFrame}/${to}/${from}`,
-  )
-    .then((responseData) => responseData.json())
-    .then((responseData) => {
+  const data = await getHistoricalCandles(stockCode, timeFrame, from, to).then(
+    (responseData) => {
       // console.log("API Response:", responseData); // Debug log
       responseData?.data?.candles?.map((candle) => {
         // console.log(candle[0].slice(0, 10));
@@ -87,7 +91,8 @@ export const getStockChartData = async (req, resp) => {
         volume: candle[5],
       }));
       return { modifiedData, days };
-    });
+    },
+  );
   const stockDetails = await Stock.findOne({
     where: {
       instrument_key: stockCode,
@@ -101,7 +106,6 @@ export const getStockChartData = async (req, resp) => {
     },
     raw: true,
   });
-  console.log(isAddedToWatchlist);
   return resp.status(200).json({
     data: modifiedData,
     days: [...days],
@@ -112,42 +116,121 @@ export const getStockChartData = async (req, resp) => {
 };
 
 export const getMarketStatus = async (req, resp) => {
-  const data = await fetch(
-    `https://api.upstox.com/v2/market/timings/${moment().format("YYYY-MM-DD")}`,
-  )
-    .then((res) => res.json())
-    .then((res) => res);
+  const data = await getMarketStatusAPI();
 
-  if (data?.data.length === 0) {
+  if (data?.data?.length === 0) {
     return resp
       .status(200)
       .json({ isMarketOpen: false, message: "no data found", success: false });
   }
-  const NSE_timeframe = data?.data?.find((item) => item.exchange === "NSE");
-  const current_time = new Date();
-  const start_time = new Date(NSE_timeframe.start_time);
-  const end_time = new Date(NSE_timeframe.end_time);
-  if (current_time > start_time && current_time < end_time) {
-    return resp
-      .status(200)
-      .json({ isMarketOpen: true, message: "market is open", success: false });
-  }
 
-  return resp
-    .status(200)
-    .json({ isMarketOpen: false, data: data, success: true });
+  return resp.status(200).json({
+    isMarketOpen: data?.data?.status === "NORMAL_OPEN",
+    data: data,
+    success: true,
+  });
 };
 
 export const getStockNews = async (req, resp) => {
-  const data = await fetch("https://stock.indianapi.in/news", {
-    headers: {
-      "X-Api-Key": process.env.INDIANAPI_KEY,
-    },
-  })
-    .then((res) => res.json())
-    .then((res) => res);
-
+  const data = await fetchNews();
   return resp.status(200).json({ data: data, success: true });
+};
+
+export const getTrendingStocks = async (req, resp) => {
+  const data = await fetchTrendingStocks();
+  //attach the instrument_key from upstox data and only give out stocks which have instrument_key attached
+  const topGainers = data?.trending_stocks?.top_gainers;
+  const topLosers = data?.trending_stocks?.top_losers;
+
+  const normalizeFn = (col, searchName) => {
+    return Sequelize.where(
+      Sequelize.fn(
+        "REGEXP_REPLACE",
+        Sequelize.col(col),
+        "[^a-zA-Z0-9]+",
+        " ",
+        "g",
+      ),
+      { [Op.iLike]: `%${searchName}%` },
+    );
+  };
+  const modifiedGainersData = await Promise.all(
+    topGainers.map(async (stock) => {
+      // Replace non-alphanumeric symbols with spaces in JS
+      const searchName = stock.company_name.replace(/[^a-zA-Z0-9]+/g, " ");
+      // console.log("### searchName", searchName);
+      // check if stock name is more than 3 words
+      let secondName;
+      const words = searchName.split(" ");
+      if (words.length >= 3) {
+        secondName = words.slice(0, 2).join(" ");
+        // console.log("### secondName", secondName);
+      }
+      const stockDetails = await Stock.findOne({
+        where: {
+          [Op.or]: [
+            // Strip out symbols dynamically from the DB columns using REGEXP_REPLACE before comparing
+            normalizeFn("name", searchName),
+            normalizeFn("trading_symbol", searchName),
+            normalizeFn("short_name", searchName),
+            secondName && normalizeFn("name", secondName),
+            secondName && normalizeFn("trading_symbol", secondName),
+            secondName && normalizeFn("short_name", secondName),
+          ],
+        },
+        raw: true,
+      });
+
+      // console.log(`${stock.company_name} : ${stockDetails?.trading_symbol}`);
+      return {
+        ...stock,
+        instrument_key: stockDetails?.instrument_key,
+      };
+    }),
+  );
+
+  const modifiedLosersData = await Promise.all(
+    topLosers.map(async (stock) => {
+      // Replace non-alphanumeric symbols with spaces in JS
+      const searchName = stock.company_name.replace(/[^a-zA-Z0-9]+/g, " ");
+      // console.log("### searchName", searchName);
+      // check if stock name is more than 3 words
+      let secondName;
+      const words = searchName.split(" ");
+      if (words.length >= 3) {
+        secondName = words.slice(0, 2).join(" ");
+        // console.log("### secondName", secondName);
+      }
+      const stockDetails = await Stock.findOne({
+        where: {
+          [Op.or]: [
+            // Strip out symbols dynamically from the DB columns using REGEXP_REPLACE before comparing
+            normalizeFn("name", searchName),
+            normalizeFn("trading_symbol", searchName),
+            normalizeFn("short_name", searchName),
+            secondName && normalizeFn("name", secondName),
+            secondName && normalizeFn("trading_symbol", secondName),
+            secondName && normalizeFn("short_name", secondName),
+          ],
+        },
+        raw: true,
+      });
+
+      // console.log(`${stock.company_name} : ${stockDetails?.trading_symbol}`);
+      return {
+        ...stock,
+        instrument_key: stockDetails?.instrument_key,
+      };
+    }),
+  );
+
+  return resp.status(200).json({
+    data: {
+      top_gainers: modifiedGainersData,
+      top_losers: modifiedLosersData,
+    },
+    success: true,
+  });
 };
 
 export const saveStocksData = async (req, resp) => {

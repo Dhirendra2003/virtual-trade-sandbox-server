@@ -2,6 +2,7 @@ import {
   getMarketStatus,
   getStockChartData,
   getStockNews,
+  getTrendingStocks,
   saveStocksData,
   searchStocks,
 } from "../controller/stocks.controller.js";
@@ -16,6 +17,7 @@ stocksRoute
   .route("/get-stock-chart-data")
   .get(checkLoggedIn, getStockChartData);
 stocksRoute.route("/get-stock-news").get(checkLoggedIn, getStockNews);
+stocksRoute.route("/get-trending-stock").get(checkLoggedIn, getTrendingStocks);
 
 //authless
 stocksRoute.route("/get-market-status").get(getMarketStatus);
