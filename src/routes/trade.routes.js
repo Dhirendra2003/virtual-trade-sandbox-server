@@ -9,6 +9,6 @@ const tradeRoute = express.Router();
 tradeRoute
   .route("/register-trade")
   .post(checkLoggedIn, marketStatus, registerTrade);
-tradeRoute.route("/get-trades").get(checkLoggedIn, getTrades);
+tradeRoute.route("/get-trades-and-orders").get(checkLoggedIn, getTrades);
 
 export default tradeRoute;

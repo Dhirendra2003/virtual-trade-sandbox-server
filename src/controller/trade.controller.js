@@ -4,6 +4,7 @@ import OrderHistory from "../models/Order.js";
 import moment from "moment";
 import { Op, Sequelize } from "sequelize";
 import { getLTP } from "../services/upstox.service.js";
+import dbManager from "../config/DatabaseManager.js";
 
 //validate all inputs ✅
 //check if user has enough balance ✅
@@ -16,8 +17,8 @@ import { getLTP } from "../services/upstox.service.js";
 
 export const registerTrade = async (req, resp) => {
   const user = req.user;
-  // const marketOpen = req.isMarketOpen;
-  const marketOpen = true; //just for simulation
+  const marketOpen = req.isMarketOpen;
+  // const marketOpen = true; //just for simulation
   const { instrument_key, trade_type, trade_duration, quantity } = req.body;
   let finalQuantity = quantity; //initially assume full quantity will be traded
   if (!instrument_key) {
@@ -245,14 +246,50 @@ export const registerTrade = async (req, resp) => {
 
 export const getTrades = async (req, res) => {
   const user = req.user;
-  const trades = await Trade.findAll({
-    where: {
-      user_id: user.id,
-    },
-  });
+  const [trades] = await dbManager
+    .getInstance()
+    .query(`select * from get_user_open_trades_report(${user.id})`);
+  const intraday = trades[0].get_user_open_trades_report?.intraday;
+  const delivery = trades[0].get_user_open_trades_report?.delivery;
+  const open_orders = trades[0].get_user_open_trades_report?.open_orders;
+
+  //get live prices for all the stocks in intraday and delivery and open orders
+  const ltpForIntraday =
+    intraday?.length > 0
+      ? await getLTP(intraday?.map((trade) => trade.instrument_key))
+      : null;
+  const ltpForDelivery =
+    delivery?.length > 0
+      ? await getLTP(delivery?.map((trade) => trade.instrument_key))
+      : null;
+  console.log("@@@ltpForIntraday", Object.values(ltpForIntraday.data));
+  const ltpForOpenOrders =
+    open_orders?.length > 0
+      ? await getLTP(open_orders?.map((trade) => trade.instrument_key))
+      : null;
+
+  //add ltp to the trades
+  intraday &&
+    intraday?.forEach((trade) => {
+      trade.ltp = Object.values(ltpForIntraday.data).find(
+        (ltp) => ltp.instrument_token === trade.instrument_key,
+      );
+    });
+  delivery &&
+    delivery?.forEach((trade) => {
+      trade.ltp = Object.values(ltpForDelivery.data).find(
+        (ltp) => ltp.instrument_token === trade.instrument_key,
+      );
+    });
+  open_orders &&
+    open_orders?.forEach((trade) => {
+      trade.ltp = Object.values(ltpForOpenOrders.data).find(
+        (ltp) => ltp.instrument_token === trade.instrument_key,
+      );
+    });
   return res.status(200).json({
     message: "Trades fetched successfully",
     success: true,
-    data: trades,
+    data: { intraday, delivery, open_orders },
   });
 };

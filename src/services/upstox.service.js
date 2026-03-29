@@ -22,6 +22,30 @@ export const getMarketStatusAPI = () => {
   return upstoxFetcher(`/v2/market/status/NSE`);
 };
 
-export const getLTP = (instrument_key) => {
-  return upstoxFetcher(`/v3/market-quote/ltp?instrument_key=${instrument_key}`);
+export const getLTP = async (instrument_key) => {
+  if (!instrument_key) {
+    return null;
+  }
+  if (Array.isArray(instrument_key) && instrument_key.length > 1) {
+    instrument_key = instrument_key.join(",");
+  } else if (Array.isArray(instrument_key) && instrument_key.length === 1) {
+    instrument_key = instrument_key[0];
+  }
+  const data = await upstoxFetcher(
+    `/v3/market-quote/ltp?instrument_key=${instrument_key}`,
+  );
+  const newData = {
+    ...data,
+    data: Object.fromEntries(
+      Object.entries(data.data).map(([key, value]) => {
+        value["change"] = (value.last_price - value.cp).toFixed(2);
+        value["change_percent"] = (
+          ((value.last_price - value.cp) / value.cp) *
+          100
+        ).toFixed(2);
+        return [key, value];
+      }),
+    ),
+  };
+  return newData;
 };

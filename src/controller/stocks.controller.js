@@ -5,6 +5,7 @@ import moment from "moment";
 import Watchlist from "../models/watchlist.js";
 import {
   getHistoricalCandles,
+  getLTP,
   // getMarketTimings,
   getMarketStatusAPI,
 } from "../services/upstox.service.js";
@@ -99,6 +100,8 @@ export const getStockChartData = async (req, resp) => {
     },
     raw: true,
   });
+  const stockLTPdata = await getLTP(stockCode);
+  const stockLTPobject = Object.values(stockLTPdata.data)[0];
   const isAddedToWatchlist = await Watchlist.findOne({
     where: {
       instrument_key: stockCode,
@@ -111,6 +114,7 @@ export const getStockChartData = async (req, resp) => {
     days: [...days],
     stockDetails: stockDetails && stockDetails,
     isAddedToWatchlist: isAddedToWatchlist ? true : false,
+    stockLTPobject: stockLTPobject,
     success: true,
   }); // Spread Set → Array so JSON.stringify works
 };
