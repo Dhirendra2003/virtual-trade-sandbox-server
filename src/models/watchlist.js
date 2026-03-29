@@ -18,8 +18,6 @@ const Watchlist = sequelize.define(
         model: "users", // the table name for User model
         key: "id",
       },
-      onUpdate: "CASCADE",
-      onDelete: "CASCADE",
     },
     instrument_key: {
       type: DataTypes.STRING,
@@ -27,16 +25,6 @@ const Watchlist = sequelize.define(
         model: "stocks", // the table name for Stock model
         key: "instrument_key",
       },
-      onUpdate: "CASCADE",
-      onDelete: "CASCADE",
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
     },
   },
   {

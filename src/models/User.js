@@ -57,13 +57,10 @@ const User = sequelize.define(
       allowNull: false,
       defaultValue: "user",
     },
-    createdAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
+    funds: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 1000000,
     },
   },
   {

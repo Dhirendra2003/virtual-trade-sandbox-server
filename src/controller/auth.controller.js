@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { getAccessToken, getRefreshToken } from "../utils/generateTokens.js";
 import cloudinary from "../utils/cloudinary.js";
+import { DURATIONS } from "../utils/constants.js";
 
 export const register = async (req, resp) => {
   const imgresult = await cloudinary.uploader.upload(req.file.path);
@@ -157,13 +158,13 @@ export const refreshAccessToken = async (req, resp) => {
         httpOnly: true,
         secure: false, // Only send cookie over HTTPS
         sameSite: "lax", // Allows cross-origin requests
-        maxAge: 1 * 60 * 1000,
+        maxAge: DURATIONS.ACCESS_TOKEN_COOKIE_DURATION,
       })
       .cookie("refreshtoken", newRefreshToken, {
         httpOnly: true,
         secure: false, // Only send cookie over HTTPS
         sameSite: "lax", // Allows cross-origin requests
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: DURATIONS.REFRESH_TOKEN_COOKIE_DURATION,
       })
       .json({ message: "Access token refreshed", success: true });
   } catch (error) {

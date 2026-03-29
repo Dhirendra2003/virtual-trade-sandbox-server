@@ -11,6 +11,7 @@ import CustomError from "./utils/errorClass.js";
 import { ENV_VARIABLES } from "./utils/constants.js";
 import stocksRoute from "./routes/stocks.routes.js";
 import watchlistRoute from "./routes/watchlist.routes.js";
+import tradeRoute from "./routes/trade.routes.js";
 import multer from "multer";
 
 const app = express();
@@ -33,6 +34,7 @@ app.use("/api/v1/oauth/", oauthRoute);
 app.use("/api/v1/user/", userRoute);
 app.use("/api/v1/stocks/", stocksRoute);
 app.use("/api/v1/watchlist/", watchlistRoute);
+app.use("/api/v1/trade/", tradeRoute);
 
 app.get("/", (req, res) => {
   res.json("Hello, World!");

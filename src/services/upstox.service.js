@@ -21,3 +21,7 @@ export const getMarketTimings = (dateStr) => {
 export const getMarketStatusAPI = () => {
   return upstoxFetcher(`/v2/market/status/NSE`);
 };
+
+export const getLTP = (instrument_key) => {
+  return upstoxFetcher(`/v3/market-quote/ltp?instrument_key=${instrument_key}`);
+};
