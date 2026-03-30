@@ -5,6 +5,7 @@ import moment from "moment";
 import Watchlist from "../models/watchlist.js";
 import {
   getHistoricalCandles,
+  getIntradayCandles,
   getLTP,
   // getMarketTimings,
   getMarketStatusAPI,
@@ -76,6 +77,26 @@ export const getStockChartData = async (req, resp) => {
   }
   let days = new Set();
   let modifiedData = [];
+  const intradayData = await getIntradayCandles(stockCode, timeFrame).then(
+    (responseData) => {
+      // console.log("API Response:", responseData); // Debug log
+      responseData?.data?.candles?.map((candle) => {
+        // console.log(candle[0].slice(0, 10));
+        days.add(candle[0].slice(0, 10));
+      });
+      modifiedData.push(
+        ...responseData?.data?.candles?.map((candle) => ({
+          date2: candle[0],
+          open: candle[1],
+          high: candle[2],
+          low: candle[3],
+          close: candle[4],
+          volume: candle[5],
+        })),
+      );
+      return { modifiedData, days };
+    },
+  );
   const data = await getHistoricalCandles(stockCode, timeFrame, from, to).then(
     (responseData) => {
       // console.log("API Response:", responseData); // Debug log
@@ -83,14 +104,16 @@ export const getStockChartData = async (req, resp) => {
         // console.log(candle[0].slice(0, 10));
         days.add(candle[0].slice(0, 10));
       });
-      modifiedData = responseData?.data?.candles?.map((candle) => ({
-        date2: candle[0],
-        open: candle[1],
-        high: candle[2],
-        low: candle[3],
-        close: candle[4],
-        volume: candle[5],
-      }));
+      modifiedData.push(
+        ...responseData?.data?.candles?.map((candle) => ({
+          date2: candle[0],
+          open: candle[1],
+          high: candle[2],
+          low: candle[3],
+          close: candle[4],
+          volume: candle[5],
+        })),
+      );
       return { modifiedData, days };
     },
   );

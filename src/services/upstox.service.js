@@ -14,6 +14,12 @@ export const getHistoricalCandles = (stockCode, timeFrame, from, to) => {
   );
 };
 
+export const getIntradayCandles = (stockCode, timeFrame) => {
+  return upstoxFetcher(
+    `/v3/historical-candle/intraday/${stockCode}/minutes/${timeFrame}`,
+  );
+};
+
 export const getMarketTimings = (dateStr) => {
   return upstoxFetcher(`/v2/market/timings/${dateStr}`);
 };

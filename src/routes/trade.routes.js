@@ -1,4 +1,8 @@
-import { registerTrade, getTrades } from "../controller/trade.controller.js";
+import {
+  registerTrade,
+  getTrades,
+  getUserFunds,
+} from "../controller/trade.controller.js";
 import express from "express";
 import checkLoggedIn from "../middleware/auth.middleware.js";
 import marketStatus from "../middleware/marketStatus.middleware.js";
@@ -10,5 +14,6 @@ tradeRoute
   .route("/register-trade")
   .post(checkLoggedIn, marketStatus, registerTrade);
 tradeRoute.route("/get-trades-and-orders").get(checkLoggedIn, getTrades);
+tradeRoute.route("/get-user-funds").get(checkLoggedIn, getUserFunds);
 
 export default tradeRoute;

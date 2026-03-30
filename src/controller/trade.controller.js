@@ -262,7 +262,6 @@ export const getTrades = async (req, res) => {
     delivery?.length > 0
       ? await getLTP(delivery?.map((trade) => trade.instrument_key))
       : null;
-  console.log("@@@ltpForIntraday", Object.values(ltpForIntraday.data));
   const ltpForOpenOrders =
     open_orders?.length > 0
       ? await getLTP(open_orders?.map((trade) => trade.instrument_key))
@@ -291,5 +290,20 @@ export const getTrades = async (req, res) => {
     message: "Trades fetched successfully",
     success: true,
     data: { intraday, delivery, open_orders },
+  });
+};
+
+export const getUserFunds = async (req, res) => {
+  const user = req.user;
+  const userFunds = await User.findOne({
+    where: {
+      id: user.id,
+    },
+    attributes: ["funds"],
+  });
+  return res.status(200).json({
+    message: "Funds fetched successfully",
+    success: true,
+    data: userFunds,
   });
 };
