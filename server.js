@@ -2,6 +2,7 @@ import "dotenv/config";
 import DatabaseManager from "./src/config/DatabaseManager.js";
 import app from "./src/app.js";
 import { ENV_VARIABLES } from "./src/utils/constants.js";
+import cron from "node-cron";
 
 // Import models
 import User from "./src/models/User.js";
@@ -9,6 +10,13 @@ import Stock from "./src/models/Stock.js";
 import Watchlist from "./src/models/watchlist.js";
 import Trade from "./src/models/Trade.js";
 import OrderHistory from "./src/models/Order.js";
+import startCronJobs from "./src/cron/index.js";
+
+cron.schedule("16 9 * * 1-5", async () => {
+  await startCronJobs();
+});
+
+console.log("Cron worker started");
 
 // Define Associations
 User.hasMany(Watchlist, { foreignKey: "user_id" });

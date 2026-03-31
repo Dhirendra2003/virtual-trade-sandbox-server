@@ -307,3 +307,17 @@ export const getUserFunds = async (req, res) => {
     data: userFunds,
   });
 };
+
+export const getUserTradeHistory = async (req, res) => {
+  const user = req.user;
+  const userFunds = await OrderHistory.findAll({
+    where: {
+      user_id: user.id,
+    },
+  });
+  return res.status(200).json({
+    message: "Funds fetched successfully",
+    success: true,
+    data: userFunds,
+  });
+};
