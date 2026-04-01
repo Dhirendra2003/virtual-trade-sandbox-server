@@ -43,7 +43,7 @@ const OrderHistory = sequelize.define(
       defaultValue: false,
     },
     status: {
-      type: DataTypes.ENUM("executed", "pending", "failed"),
+      type: DataTypes.ENUM("executed", "pending", "failed", "cancelled"),
       allowNull: false,
       defaultValue: "pending",
     },
