@@ -152,3 +152,123 @@ export const executeAMOorders = async () => {
     }
   }
 };
+
+export const settleIntradayTrades = async () => {
+  console.log("Executing Intraday Trades Settlement...");
+
+  try {
+    const openIntradayTrades = await Trade.findAll({
+      where: {
+        trade_duration: "intraday",
+        status: "open",
+      },
+    });
+
+    if (!openIntradayTrades || openIntradayTrades.length === 0) {
+      console.log("No open intraday trades found to settle.");
+      return;
+    }
+
+    console.log(`Found ${openIntradayTrades.length} open intraday trades.`);
+
+    const uniqueKeys = [
+      ...new Set(openIntradayTrades.map((t) => t.instrument_key)),
+    ];
+
+    let ltpMap = {};
+    if (uniqueKeys.length > 0) {
+      const ltpData = await getLTP(uniqueKeys);
+      if (ltpData && ltpData.data) {
+        Object.values(ltpData.data).forEach((quote) => {
+          ltpMap[quote.instrument_token] = quote.last_price;
+        });
+      }
+    }
+
+    // Group the trades
+    const groupedTrades = {};
+    for (const trade of openIntradayTrades) {
+      const key = `${trade.user_id}_${trade.instrument_key}_${trade.trade_type}`;
+      if (!groupedTrades[key]) {
+        groupedTrades[key] = {
+          user_id: trade.user_id,
+          instrument_key: trade.instrument_key,
+          trade_type: trade.trade_type,
+          trades: [],
+          totalQuantity: 0,
+        };
+      }
+      groupedTrades[key].trades.push(trade);
+      groupedTrades[key].totalQuantity += trade.quantity;
+    }
+
+    for (const key in groupedTrades) {
+      const group = groupedTrades[key];
+      const { user_id, instrument_key, trade_type, trades, totalQuantity } =
+        group;
+      const currentPrice = ltpMap[instrument_key];
+
+      if (!currentPrice) {
+        console.error(
+          `Skipping settlement for ${instrument_key}: unable to fetch LTP`,
+        );
+        continue;
+      }
+
+      const orderTradeType = trade_type === "buy" ? "sell" : "buy";
+
+      try {
+        await OrderHistory.create({
+          user_id,
+          instrument_key,
+          trade_type: orderTradeType,
+          trade_duration: "intraday",
+          is_after_market_order: false,
+          status: "executed",
+          order_type: "market",
+          quantity: totalQuantity,
+          executedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+        });
+
+        let totalFundsChange = 0;
+        console.log(
+          "list of trades",
+          trades.map((trade) => `${trade.id},`),
+        );
+
+        for (const trade of trades) {
+          const exitValue =
+            parseFloat(currentPrice) *
+            parseFloat(trade.quantity) *
+            (trade_type === "buy" ? 1 : -1);
+
+          trade.total_exit_value = (
+            parseFloat(trade.total_exit_value ?? 0) + exitValue
+          ).toFixed(2);
+          trade.exit_price = currentPrice;
+          trade.status = "settled";
+          trade.quantity = 0;
+          await trade.save();
+
+          totalFundsChange += exitValue;
+        }
+
+        const userRecord = await User.findByPk(user_id);
+        if (userRecord) {
+          userRecord.funds = (
+            parseFloat(userRecord.funds) + totalFundsChange
+          ).toFixed(2);
+          await userRecord.save();
+        }
+      } catch (error) {
+        console.error(
+          `Failed to settle intraday trades for group ${key}:`,
+          error,
+        );
+      }
+    }
+    console.log("Intraday trades settlement completed.");
+  } catch (error) {
+    console.error("Failed to execute settleIntradayTrades:", error);
+  }
+};

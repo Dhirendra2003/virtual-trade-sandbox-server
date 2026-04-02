@@ -13,7 +13,10 @@ import OrderHistory from "./src/models/Order.js";
 import startCronJobs from "./src/cron/index.js";
 
 cron.schedule("16 9 * * 1-5", async () => {
-  await startCronJobs();
+  await startCronJobs("executeAMO");
+});
+cron.schedule("15 15 * * 1-5", async () => {
+  await startCronJobs("settleIntradayTrades");
 });
 
 console.log("Cron worker started");
