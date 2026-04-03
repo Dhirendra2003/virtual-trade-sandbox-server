@@ -210,10 +210,3 @@ export const getData = async (req, resp) => {
     })
     .json({ user: userObject, message: "login success", success: true });
 };
-
-export const upload = async (req, resp) => {
-  console.log(req.body);
-  console.log(req.file);
-
-  return resp.redirect("/index.html");
-};

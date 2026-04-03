@@ -1,4 +1,5 @@
 import {
+  getDailyRecommendations,
   getMarketStatus,
   getStockChartData,
   getStockNews,
@@ -18,6 +19,9 @@ stocksRoute
   .get(checkLoggedIn, getStockChartData);
 stocksRoute.route("/get-stock-news").get(checkLoggedIn, getStockNews);
 stocksRoute.route("/get-trending-stock").get(checkLoggedIn, getTrendingStocks);
+stocksRoute
+  .route("/get-daily-recommendations")
+  .post(checkLoggedIn, getDailyRecommendations);
 
 //authless
 stocksRoute.route("/get-market-status").get(getMarketStatus);

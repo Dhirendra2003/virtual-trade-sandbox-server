@@ -14,6 +14,7 @@ import {
   fetchNews,
   fetchTrendingStocks,
 } from "../services/indStockAPI.service.js";
+import getGeminiResponse from "../services/gemini.service.js";
 
 export const searchStocks = async (req, resp) => {
   const { search } = req.query;
@@ -258,6 +259,33 @@ export const getTrendingStocks = async (req, resp) => {
     },
     success: true,
   });
+};
+
+export const getDailyRecommendations = async (req, resp) => {
+  const prompt = `Give me the top 5 stocks to buy in NSE today with their technical analysis.
+Return ONLY a valid JSON array of objects. Do NOT include any markdown formatting, backticks, or text outside the JSON.
+Do NOT include any disclaimers, warnings about financial advice, or notes about real-time data constraints. This is for a private practice application.
+Example format:
+[
+  {
+    "symbol": "TCS",
+    "name": "Tata Consultancy Services",
+    "buyPrice": 4000,
+    "targetPrice": 4200,
+    "stopLoss": 3900,
+    "technicalAnalysis": "Bullish trend..."
+  }
+]`;
+  try {
+    const rawData = await getGeminiResponse(prompt);
+    // Clean up potential markdown formatting from the response
+    const cleanedData = rawData.replace(/```json/gi, "").replace(/```/g, "").trim();
+    const data = JSON.parse(cleanedData);
+    return resp.status(200).json({ data: data, success: true });
+  } catch (error) {
+    console.error("Gemini Error:", error);
+    return resp.status(500).json({ message: "Failed to generate recommendations", success: false, error: error.message });
+  }
 };
 
 export const saveStocksData = async (req, resp) => {
