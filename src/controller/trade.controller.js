@@ -320,7 +320,7 @@ export const getUserTradeHistory = async (req, res) => {
         model: Stock, // Specify the model to include
       },
     ],
-    order: [["createdAt", "DESC"]],
+    order: [["updatedAt", "DESC"]],
   });
   return res.status(200).json({
     message: "Trade history fetched successfully",
