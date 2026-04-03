@@ -362,6 +362,8 @@ export const cancelAMOorder = async (req, res) => {
 export const settleTrade = async (req, res) => {
   const user = req.user;
   const marketOpen = req.isMarketOpen;
+  // const marketOpen = true;
+
   const { instrument_key, trade_type, trade_duration } = req.body;
 
   // --- Input validation ---

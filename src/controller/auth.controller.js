@@ -7,7 +7,10 @@ import cloudinary from "../utils/cloudinary.js";
 import { DURATIONS } from "../utils/constants.js";
 
 export const register = async (req, resp) => {
-  const imgresult = await cloudinary.uploader.upload(req.file.path);
+  let imgresult;
+  if (req.file) {
+    imgresult = await cloudinary.uploader.upload(req.file.path);
+  }
   console.log("### result", imgresult);
   const { username, email, password, phone, dateofbirth } = req.body;
   if (!username || !email || !password || !dateofbirth) {
@@ -30,7 +33,7 @@ export const register = async (req, resp) => {
     password: hashedPassword,
     phone: phone,
     dateOfBirth: dateofbirth,
-    profilePicURL: imgresult.url,
+    profilePicURL: imgresult?.url || "",
   });
   const accessToken = getAccessToken(user.id, user.email);
   const refreshToken = getRefreshToken(user.id, user.email);
