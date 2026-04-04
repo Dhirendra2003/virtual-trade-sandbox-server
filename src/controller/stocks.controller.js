@@ -262,29 +262,80 @@ export const getTrendingStocks = async (req, resp) => {
 };
 
 export const getDailyRecommendations = async (req, resp) => {
-  const prompt = `Give me the top 5 stocks to buy in NSE today with their technical analysis.
-Return ONLY a valid JSON array of objects. Do NOT include any markdown formatting, backticks, or text outside the JSON.
-Do NOT include any disclaimers, warnings about financial advice, or notes about real-time data constraints. This is for a private practice application.
-Example format:
+  const prompt = `Give me the top 5 stocks to buy in NSE today based on latest available real market data.
+
+STRICT INSTRUCTIONS:
+
+Use recent NSE data (last trading session or latest available intraday data) from reliable sources like NSE India, Moneycontrol, or similar.
+Ensure buyPrice is close to actual current/last traded price (LTP) — avoid rounded or unrealistic numbers.
+Prices must be within a realistic range (±2-3%) of actual market price.
+Use recent technical indicators such as:
+Support & Resistance
+Moving Averages (20/50 EMA or SMA)
+RSI (Relative Strength Index)
+Volume trend
+Breakouts / consolidation patterns
+Prefer liquid large-cap or actively traded stocks (Nifty 50 or high-volume stocks).
+Avoid penny stocks or illiquid stocks.
+
+OUTPUT FORMAT RULES:
+
+Return ONLY a valid JSON array.
+No markdown, no explanation, no extra text.
+
+Each object must follow:
 [
-  {
-    "symbol": "TCS",
-    "name": "Tata Consultancy Services",
-    "buyPrice": 4000,
-    "targetPrice": 4200,
-    "stopLoss": 3900,
-    "technicalAnalysis": "Bullish trend..."
-  }
-]`;
+{
+"symbol": "RELIANCE",
+"name": "Reliance Industries",
+"buyPrice": 2850,
+"targetPrice": 2950,
+"stopLoss": 2790,
+"technicalAnalysis": "Price near 20 EMA support, RSI ~55 showing strength, breakout above resistance with strong volume."
+}
+]
+
+VALIDATION RULES:
+
+buyPrice ≈ latest LTP
+targetPrice = realistic (2–5% upside for intraday/swing)
+stopLoss = logical support level
+technicalAnalysis must be specific, not generic
+
+If real-time data is unavailable, use most recent closing price and clearly base analysis on that but still keep numbers realistic`;
   try {
     const rawData = await getGeminiResponse(prompt);
     // Clean up potential markdown formatting from the response
-    const cleanedData = rawData.replace(/```json/gi, "").replace(/```/g, "").trim();
+    const cleanedData = rawData
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim();
     const data = JSON.parse(cleanedData);
-    return resp.status(200).json({ data: data, success: true });
+    const modifiedData = await Promise.all(
+      data.map(async (stock) => {
+        const stockDetails = await Stock.findOne({
+          where: {
+            trading_symbol: stock.symbol,
+          },
+          raw: true,
+        });
+        if (!stockDetails) {
+          return null;
+        }
+        return {
+          ...stock,
+          instrument_key: stockDetails?.instrument_key,
+        };
+      }),
+    );
+    return resp.status(200).json({ data: modifiedData, success: true });
   } catch (error) {
     console.error("Gemini Error:", error);
-    return resp.status(500).json({ message: "Failed to generate recommendations", success: false, error: error.message });
+    return resp.status(500).json({
+      message: "Failed to generate recommendations",
+      success: false,
+      error: error.message,
+    });
   }
 };
 

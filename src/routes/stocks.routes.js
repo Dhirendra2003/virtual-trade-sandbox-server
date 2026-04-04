@@ -21,7 +21,7 @@ stocksRoute.route("/get-stock-news").get(checkLoggedIn, getStockNews);
 stocksRoute.route("/get-trending-stock").get(checkLoggedIn, getTrendingStocks);
 stocksRoute
   .route("/get-daily-recommendations")
-  .post(checkLoggedIn, getDailyRecommendations);
+  .get(checkLoggedIn, getDailyRecommendations);
 
 //authless
 stocksRoute.route("/get-market-status").get(getMarketStatus);
