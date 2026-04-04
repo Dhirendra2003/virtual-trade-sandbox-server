@@ -83,6 +83,21 @@ const executeSingleAMOOrder = async (order) => {
     },
     order: [["createdAt", "ASC"]],
   });
+  const totalComplementaryQuantity = complementaryTrades.reduce(
+    (acc, ct) => acc + ct.quantity,
+    0,
+  );
+  if (
+    order.trade_duration === "delivery" &&
+    order.trade_type === "sell" &&
+    order.quantity > totalComplementaryQuantity
+  ) {
+    console.log("QTY EXCEEDED more than holdings", order.id);
+    order.status = "failed";
+    order.executedAt = executedAt;
+    await order.save();
+    return;
+  }
 
   const user = await User.findByPk(order.user_id);
   const balance = parseFloat(user.funds);

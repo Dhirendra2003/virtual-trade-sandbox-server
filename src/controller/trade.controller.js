@@ -19,7 +19,7 @@ import dbManager from "../config/DatabaseManager.js";
 export const registerTrade = async (req, resp) => {
   const user = req.user;
   const marketOpen = req.isMarketOpen;
-  // const marketOpen = false; //just for simulation
+  // const marketOpen = true; //just for simulation
   const { instrument_key, trade_type, trade_duration, quantity } = req.body;
   let finalQuantity = quantity; //initially assume full quantity will be traded
   if (!instrument_key) {
@@ -114,6 +114,22 @@ export const registerTrade = async (req, resp) => {
       },
       order: [["createdAt", "ASC"]],
     });
+
+    const totalComplementaryQuantity = complementaryTrades.reduce(
+      (acc, ct) => acc + ct.quantity,
+      0,
+    );
+    console.log(totalComplementaryQuantity, quantity);
+    if (
+      trade_duration === "delivery" &&
+      trade_type === "sell" &&
+      quantity > totalComplementaryQuantity
+    ) {
+      return resp.status(400).json({
+        message: "SHORT SELLING is not allowed for delivery trades",
+        success: false,
+      });
+    }
 
     //check users balance
     const userFindById = await User.findByPk(user.id);
