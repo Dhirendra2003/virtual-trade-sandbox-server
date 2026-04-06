@@ -6,6 +6,7 @@ import moment from "moment";
 import { Op, Sequelize } from "sequelize";
 import { getLTP } from "../services/upstox.service.js";
 import dbManager from "../config/DatabaseManager.js";
+import excel from "node-excel-export";
 
 //validate all inputs ✅
 //check if user has enough balance ✅
@@ -613,6 +614,110 @@ export const getPortfolioStats = async (req, res) => {
     });
   } catch (error) {
     console.error("getPortfolioStats error:", error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
+};
+
+export const downloadUserTradeHistory = async (req, res) => {
+  try {
+    const user = req.user;
+    const userName = await User.findByPk(user.id, {
+      attributes: ["name"],
+      raw: true,
+    });
+    const userTradeHistory = await OrderHistory.findAll({
+      where: {
+        user_id: user.id,
+      },
+      include: [
+        {
+          model: Stock,
+          attributes: ["instrument_key", "trading_symbol", "name"], // Specify the model to include
+        },
+      ],
+      order: [["updatedAt", "DESC"]],
+      raw: true,
+    });
+    const flatTradeHistory = userTradeHistory.map((trade) => {
+      return {
+        ...trade,
+        ...trade.Stock,
+      };
+    });
+    console.log(flatTradeHistory[0]);
+    console.log(flatTradeHistory[flatTradeHistory.length - 1]);
+
+    //Here you specify the export structure
+    const specification = {
+      instrument_key: {
+        // <- the key should match the actual data key
+        displayName: "Stock Code", // <- Here you specify the column header
+        headerStyle: {},
+        width: 200,
+      },
+      "Stock.trading_symbol": {
+        displayName: "Symbol",
+        headerStyle: {},
+        width: 200,
+      },
+
+      trade_type: {
+        displayName: "Trade Type",
+        headerStyle: {},
+        width: 200,
+      },
+
+      "Stock.name": {
+        displayName: "Stock Name",
+        headerStyle: {},
+        width: 200,
+      },
+
+      trade_duration: {
+        displayName: "Trade Duration",
+        headerStyle: {},
+        width: 200,
+      },
+      quantity: {
+        displayName: "Quantity",
+        headerStyle: {},
+        width: 200,
+      },
+      status: {
+        displayName: "Trade Status",
+        headerStyle: {},
+        width: 200,
+      },
+      createdAt: {
+        displayName: "Created At",
+        headerStyle: {},
+        width: 200,
+      },
+      updatedAt: {
+        displayName: "Updated At",
+        headerStyle: {},
+        width: 200,
+      },
+    };
+
+    const report = excel.buildExport([
+      // <- Notice that this is an array. Pass multiple sheets to create multi sheet report
+      {
+        name: `${userName.name} Trade History`, // <- Specify sheet name (optional)
+
+        specification: specification, // <- Report specification
+        // specification: {}, // <- Report specification
+        data: flatTradeHistory, // <-- Report data
+      },
+    ]);
+    // console.log(userName);
+    // You can then return this straight
+    res.attachment(`${userName.name} Trade History.xlsx`); // This is sails.js specific (in general you need to set headers)
+    return res.status(200).send(report);
+  } catch (error) {
+    console.log(error);
     return res
       .status(500)
       .json({ message: "Internal server error", success: false });

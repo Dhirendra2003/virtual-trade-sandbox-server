@@ -6,6 +6,7 @@ import {
   cancelAMOorder,
   settleTrade,
   getPortfolioStats,
+  downloadUserTradeHistory,
 } from "../controller/trade.controller.js";
 import express from "express";
 import checkLoggedIn from "../middleware/auth.middleware.js";
@@ -25,5 +26,8 @@ tradeRoute
 tradeRoute.route("/cancel-amo-order").put(checkLoggedIn, cancelAMOorder);
 tradeRoute.route("/settle-trade").put(checkLoggedIn, marketStatus, settleTrade);
 tradeRoute.route("/portfolio-stats").get(checkLoggedIn, getPortfolioStats);
+tradeRoute
+  .route("/download-trade-history")
+  .get(checkLoggedIn, downloadUserTradeHistory);
 
 export default tradeRoute;
