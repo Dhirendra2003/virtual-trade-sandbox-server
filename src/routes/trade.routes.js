@@ -7,6 +7,7 @@ import {
   settleTrade,
   getPortfolioStats,
   downloadUserTradeHistory,
+  getUserAnalytics,
 } from "../controller/trade.controller.js";
 import express from "express";
 import checkLoggedIn from "../middleware/auth.middleware.js";
@@ -29,5 +30,6 @@ tradeRoute.route("/portfolio-stats").get(checkLoggedIn, getPortfolioStats);
 tradeRoute
   .route("/download-trade-history")
   .get(checkLoggedIn, downloadUserTradeHistory);
+tradeRoute.route("/user-analytics").get(checkLoggedIn, getUserAnalytics);
 
 export default tradeRoute;

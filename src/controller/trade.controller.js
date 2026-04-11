@@ -723,3 +723,27 @@ export const downloadUserTradeHistory = async (req, res) => {
       .json({ message: "Internal server error", success: false });
   }
 };
+
+export const getUserAnalytics = async (req, res) => {
+  const user = req.user;
+  // const user = { id: 18 };
+
+  const [trades] = await dbManager.getInstance().query(`
+    SELECT sp_pnl_analytics(${user.id});
+    SELECT sp_trade_insights(${user.id});
+    SELECT sp_portfolio_distribution(${user.id});
+    SELECT sp_consistency_heatmap(${user.id});
+    `);
+
+  const data = {
+    pnl_bar_chart: trades[0].sp_pnl_analytics,
+    trade_rankings_table: trades[1].sp_trade_insights,
+    distribution_pie_chart: trades[2].sp_portfolio_distribution,
+    consistency_heatmap: trades[3].sp_consistency_heatmap,
+  };
+  return res.status(200).json({
+    message: "Trades fetched successfully",
+    success: true,
+    data: data,
+  });
+};
