@@ -7,6 +7,7 @@ import { Op, Sequelize } from "sequelize";
 import { getLTP } from "../services/upstox.service.js";
 import dbManager from "../config/DatabaseManager.js";
 import excel from "node-excel-export";
+import createNotification from "../services/userNotification.service.js";
 
 //validate all inputs ✅
 //check if user has enough balance ✅
@@ -137,6 +138,12 @@ export const registerTrade = async (req, resp) => {
     const balance = parseFloat(userFindById.funds);
     if (balance < -parseFloat(totalEntryValue)) {
       //enter a failed order
+      createNotification(
+        user.id,
+        "warning",
+        "Order Not Placed",
+        "Insufficient Funds to Place this Trade",
+      );
       await OrderHistory.create({
         user_id: user.id,
         instrument_key: instrument_key,
@@ -168,6 +175,12 @@ export const registerTrade = async (req, resp) => {
       quantity: quantity,
       executedAt: executedAt,
     });
+    createNotification(
+      user.id,
+      "success",
+      "Order Executed",
+      `Your ${trade_type} order for ${instrument_key} has been executed at ${currentPrice} x ${quantity}`,
+    );
 
     // Greedily drain complementary trades one by one
     let remainingQty = quantity;
@@ -241,6 +254,12 @@ export const registerTrade = async (req, resp) => {
       success: true,
     });
   } else {
+    createNotification(
+      user.id,
+      "info",
+      "After Market Order Placed",
+      `Your ${trade_type} order for ${instrument_key} x ${quantity} has been placed as AMO and will be executed on next trading day at 9:15 AM`,
+    );
     // make fresh order will be executed by cron job at 9:15 AM
     const newOrder = await OrderHistory.create({
       user_id: user.id,
@@ -369,6 +388,12 @@ export const cancelAMOorder = async (req, res) => {
   }
   order.status = "cancelled";
   await order.save();
+  createNotification(
+    user.id,
+    "success",
+    "Order Cancelled",
+    `Your ${order.trade_type} order for ${order.instrument_key} ,qty:${order.quantity} has been cancelled`,
+  );
   return res.status(200).json({
     message: "Order cancelled successfully",
     success: true,
@@ -459,6 +484,12 @@ export const settleTrade = async (req, res) => {
     // in case of closed market make an AMO order and exit
     if (!marketOpen) {
       console.log("market is closed , placing AMO order");
+      createNotification(
+        user.id,
+        "info",
+        "After Market Order Placed",
+        `Your ${trade_type} order for ${instrument_key} x ${totalQuantity} has been placed as AMO and will be executed on next trading day at 9:15 AM`,
+      );
       const order = await OrderHistory.create({
         user_id: user.id,
         instrument_key: instrument_key,
@@ -489,6 +520,12 @@ export const settleTrade = async (req, res) => {
       quantity: totalQuantity,
       executedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
     });
+    createNotification(
+      user.id,
+      "success",
+      "Order Executed",
+      `Your ${trade_type} order for ${instrument_key} has been executed at ${currentPrice} x ${totalQuantity}`,
+    );
 
     // Settle each trade and track total exit value to update user funds
     let totalFundsChange = 0;

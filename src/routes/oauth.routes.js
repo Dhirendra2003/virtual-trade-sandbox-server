@@ -3,6 +3,7 @@ import passport from "passport";
 import checkLoggedIn from "../middleware/auth.middleware.js";
 import { getAccessToken, getRefreshToken } from "../utils/generateTokens.js";
 import { COOKIE_OPTIONS, ENV_VARIABLES } from "../utils/constants.js";
+import createNotification from "../services/userNotification.service.js";
 
 const router = express.Router();
 
@@ -33,6 +34,12 @@ router.get(
       user.refreshToken = refreshToken;
       await user.save();
 
+      createNotification(
+        user.id,
+        "success",
+        "New Login Detected",
+        `Welcome back ${user.name}!`,
+      );
       // 3. Set cookies (using same options as your login controller)
       res.cookie(
         "accesstoken",
@@ -89,6 +96,12 @@ router.get(
       user.refreshToken = refreshToken;
       await user.save();
 
+      createNotification(
+        user.id,
+        "success",
+        "New Login Detected",
+        `Welcome back ${user.name}!`,
+      );
       // 3. Set cookies (using same options as your login controller)
       res.cookie(
         "accesstoken",

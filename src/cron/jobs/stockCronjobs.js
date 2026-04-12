@@ -4,6 +4,7 @@ import Trade from "../../models/Trade.js";
 import User from "../../models/User.js";
 import OrderHistory from "../../models/Order.js";
 import { getLTP } from "../../services/upstox.service.js";
+import createNotification from "../../services/userNotification.service.js";
 
 const getCurrentPrice = async (instrumentKey) => {
   const ltpData = await getLTP(instrumentKey);
@@ -96,6 +97,12 @@ const executeSingleAMOOrder = async (order) => {
     order.status = "failed";
     order.executedAt = executedAt;
     await order.save();
+    createNotification(
+      order.user_id,
+      "warning",
+      "Order Not Placed",
+      `Your ${order.trade_type} order for ${order.instrument_key} has been failed because you have only ${totalComplementaryQuantity} quantity in your holdings`,
+    );
     return;
   }
 
@@ -106,6 +113,12 @@ const executeSingleAMOOrder = async (order) => {
     order.status = "failed";
     order.executedAt = executedAt;
     await order.save();
+    createNotification(
+      order.user_id,
+      "warning",
+      "Order Not Placed",
+      `Your ${order.trade_type} order for ${order.instrument_key} has been failed due to insufficient funds`,
+    );
     return;
   }
 
@@ -141,6 +154,12 @@ const executeSingleAMOOrder = async (order) => {
     });
   }
 
+  createNotification(
+    user.id,
+    "success",
+    "After Market Order Executed",
+    `Your ${order.trade_type} order for ${order.instrument_key} has been executed at ${currentPrice} x ${order.quantity}`,
+  );
   order.status = "executed";
   order.executedAt = executedAt;
   await order.save();
@@ -244,6 +263,12 @@ export const settleIntradayTrades = async () => {
           quantity: totalQuantity,
           executedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
         });
+        createNotification(
+          user_id,
+          "info",
+          "Intraday Trade Squared Off",
+          `Your ${trade_type} trade for ${instrument_key} has been squared off at ${currentPrice} x ${totalQuantity}`,
+        );
 
         let totalFundsChange = 0;
         console.log(

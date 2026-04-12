@@ -10,6 +10,7 @@ import Stock from "./src/models/Stock.js";
 import Watchlist from "./src/models/watchlist.js";
 import Trade from "./src/models/Trade.js";
 import OrderHistory from "./src/models/Order.js";
+import Notification from "./src/models/Notification.js";
 import startCronJobs from "./src/cron/index.js";
 
 cron.schedule("16 9 * * 1-5", async () => {
@@ -39,6 +40,9 @@ Trade.belongsTo(Stock, { foreignKey: "instrument_key" });
 
 Stock.hasMany(OrderHistory, { foreignKey: "instrument_key" });
 OrderHistory.belongsTo(Stock, { foreignKey: "instrument_key" });
+
+User.hasMany(Notification, { foreignKey: "user_id" });
+Notification.belongsTo(User, { foreignKey: "user_id" });
 
 // Connect to Database and then start server
 DatabaseManager.connect()

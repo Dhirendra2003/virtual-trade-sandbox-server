@@ -1,7 +1,6 @@
 import Stock from "../models/Stock.js";
 import stocksData from "../data/NSE_MIS_Data.json" with { type: "json" };
 import { Op, Sequelize } from "sequelize";
-import moment from "moment";
 import Watchlist from "../models/watchlist.js";
 import {
   getHistoricalCandles,

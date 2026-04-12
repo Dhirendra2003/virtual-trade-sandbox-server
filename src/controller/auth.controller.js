@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import { getAccessToken, getRefreshToken } from "../utils/generateTokens.js";
 import cloudinary from "../utils/cloudinary.js";
 import { DURATIONS } from "../utils/constants.js";
+import createNotification from "../services/userNotification.service.js";
 
 export const register = async (req, resp) => {
   let imgresult;
@@ -44,6 +45,12 @@ export const register = async (req, resp) => {
   const userObject = user.toJSON();
   delete userObject.password;
   delete userObject.refreshToken;
+  createNotification(
+    user.id,
+    "success",
+    "Registration Successful",
+    "Welcome to Virtual Trade Sandbox ! Start Exploring the Markets",
+  );
   return resp
     .status(200)
     .cookie("accesstoken", accessToken, {
@@ -76,7 +83,7 @@ export const login = async (req, resp) => {
 
   // Check if user has a password (might be null for OAuth users)
   if (!user.password && (user.facebookId || user.googleId)) {
-    return resp.status(400).json({
+    return resp.status(403).json({
       message:
         "This account was created using social login. Please login with Google or Facebook.",
       success: false,
@@ -93,7 +100,12 @@ export const login = async (req, resp) => {
     const userObject = user.toJSON();
     delete userObject.password;
     delete userObject.refreshToken;
-
+    createNotification(
+      user.id,
+      "success",
+      "New Login Detected",
+      `Welcome back ${userObject.name}!`,
+    );
     return resp
       .status(200)
       .cookie("accesstoken", accessToken, {
@@ -111,8 +123,8 @@ export const login = async (req, resp) => {
       .json({ user: userObject, message: "login success", success: true });
   } else {
     return resp
-      .status(401)
-      .json({ message: "password do not match", success: false });
+      .status(403)
+      .json({ message: "Invalid email or password", success: false });
   }
 };
 
