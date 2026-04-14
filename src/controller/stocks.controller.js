@@ -11,6 +11,7 @@ import {
 } from "../services/upstox.service.js";
 import {
   fetchNews,
+  fetchStockInfo,
   fetchTrendingStocks,
 } from "../services/indStockAPI.service.js";
 import getGeminiResponse from "../services/gemini.service.js";
@@ -161,6 +162,21 @@ export const getMarketStatus = async (req, resp) => {
 export const getStockNews = async (req, resp) => {
   const data = await fetchNews();
   return resp.status(200).json({ data: data, success: true });
+};
+
+export const getStockInfo = async (req, resp) => {
+  const { symbol } = req.params;
+  const data = await fetchStockInfo(symbol);
+  const filteredData = {
+    companyName: data?.companyName,
+    industry: data?.industry,
+    riskMeter: data?.riskMeter,
+    companyDescription: data?.companyProfile?.companyDescription,
+    peerCompanyList: data?.companyProfile?.peerCompanyList,
+    shareholding: data?.shareholding,
+    recentNews: data?.recentNews,
+  };
+  return resp.status(200).json({ data: filteredData, success: true });
 };
 
 export const getTrendingStocks = async (req, resp) => {

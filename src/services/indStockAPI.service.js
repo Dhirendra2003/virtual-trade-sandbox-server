@@ -30,3 +30,6 @@ export const fetchNews = () => {
 export const fetchTrendingStocks = () => {
   return indAPIFetcher("/trending");
 };
+export const fetchStockInfo = (symbol) => {
+  return indAPIFetcher(`/stock?name=${symbol}`);
+};

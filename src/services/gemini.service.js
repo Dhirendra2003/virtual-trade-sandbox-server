@@ -3,7 +3,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEM_API_KEY });
 const getGeminiResponse = async (prompt) => {
   try {
     const APIresponse = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview",
+      model: "gemini-2.5-flash-lite",
       contents: prompt,
       config: {
         responseMimeType: "application/json",

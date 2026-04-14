@@ -6,6 +6,7 @@ import {
   getTrendingStocks,
   saveStocksData,
   searchStocks,
+  getStockInfo,
 } from "../controller/stocks.controller.js";
 import express from "express";
 import checkLoggedIn from "../middleware/auth.middleware.js";
@@ -19,6 +20,7 @@ stocksRoute
   .get(checkLoggedIn, getStockChartData);
 stocksRoute.route("/get-stock-news").get(checkLoggedIn, getStockNews);
 stocksRoute.route("/get-trending-stock").get(checkLoggedIn, getTrendingStocks);
+stocksRoute.route("/get-stock-info/:symbol").get(checkLoggedIn, getStockInfo);
 stocksRoute
   .route("/get-daily-recommendations")
   .get(checkLoggedIn, getDailyRecommendations);
