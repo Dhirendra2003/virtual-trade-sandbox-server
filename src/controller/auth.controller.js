@@ -210,15 +210,143 @@ export const getData = async (req, resp) => {
     .status(200)
     .cookie("accesstoken", accessToken, {
       httpOnly: true,
-      secure: false, // Only send cookie over HTTPS
-      sameSite: "lax", // Allows cross-origin requests
+      secure: false,
+      sameSite: "lax",
       maxAge: 1 * 60 * 1000,
     })
     .cookie("refreshtoken", refreshToken, {
       httpOnly: true,
-      secure: false, // Only send cookie over HTTPS
-      sameSite: "lax", // Allows cross-origin requests
+      secure: false,
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     })
     .json({ user: userObject, message: "login success", success: true });
+};
+
+// ─── Reset Password ───────────────────────────────────────────────────────────
+export const resetPassword = async (req, resp) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      return resp
+        .status(400)
+        .json({ message: "oldPassword and newPassword are required", success: false });
+    }
+
+    const user = await User.findOne({ where: { id: req.user.id } });
+    if (!user) {
+      return resp.status(404).json({ message: "user not found", success: false });
+    }
+
+    // OAuth users may not have a password
+    if (!user.password) {
+      return resp.status(403).json({
+        message: "Password change is not available for social-login accounts.",
+        success: false,
+      });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return resp
+        .status(403)
+        .json({ message: "Current password is incorrect", success: false });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    createNotification(
+      user.id,
+      "warning",
+      "Password Changed",
+      "Your account password was updated successfully. If this wasn't you, please contact support immediately."
+    );
+
+    return resp
+      .status(200)
+      .json({ message: "Password updated successfully", success: true });
+  } catch (error) {
+    console.error(error);
+    return resp.status(500).json({ message: "Internal server error", success: false });
+  }
+};
+
+// ─── Update Profile Picture ───────────────────────────────────────────────────
+export const updateProfilePicture = async (req, resp) => {
+  try {
+    if (!req.file) {
+      return resp.status(400).json({ message: "No image file provided", success: false });
+    }
+
+    const user = await User.findOne({ where: { id: req.user.id } });
+    if (!user) {
+      return resp.status(404).json({ message: "user not found", success: false });
+    }
+
+    // Upload to Cloudinary
+    const imgResult = await cloudinary.uploader.upload(req.file.path);
+    user.profilePicURL = imgResult.url;
+    await user.save();
+
+    const userObject = user.toJSON();
+    delete userObject.password;
+    delete userObject.refreshToken;
+
+    createNotification(
+      user.id,
+      "success",
+      "Profile Picture Updated",
+      "Your profile photo has been changed successfully."
+    );
+
+    return resp.status(200).json({
+      user: userObject,
+      message: "Profile picture updated successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+    return resp.status(500).json({ message: "Internal server error", success: false });
+  }
+};
+
+// ─── Update Display Name ──────────────────────────────────────────────────────
+export const updateDisplayName = async (req, resp) => {
+  try {
+    const { name } = req.body;
+    if (!name || name.trim().length < 2) {
+      return resp
+        .status(400)
+        .json({ message: "Name must be at least 2 characters", success: false });
+    }
+
+    const user = await User.findOne({ where: { id: req.user.id } });
+    if (!user) {
+      return resp.status(404).json({ message: "user not found", success: false });
+    }
+
+    user.name = name.trim();
+    await user.save();
+
+    const userObject = user.toJSON();
+    delete userObject.password;
+    delete userObject.refreshToken;
+
+    createNotification(
+      user.id,
+      "info",
+      "Display Name Updated",
+      `Your display name has been changed to "${userObject.name}".`
+    );
+
+    return resp.status(200).json({
+      user: userObject,
+      message: "Display name updated successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+    return resp.status(500).json({ message: "Internal server error", success: false });
+  }
 };
