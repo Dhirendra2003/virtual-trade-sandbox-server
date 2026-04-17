@@ -62,6 +62,24 @@ const User = sequelize.define(
       allowNull: false,
       defaultValue: 1000000,
     },
+    preferences: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {
+        notifications: {
+          tradeExecuted: true,
+          amoExecuted: true,
+          appUpdates: true,
+        },
+        mailsPreference: {
+          monthlySummary: true,
+          newUpdates: true,
+        },
+        theme: "dark",
+        chartType: "candlestick",
+        chartInterval: "1m",
+      },
+    },
   },
   {
     tableName: "users",

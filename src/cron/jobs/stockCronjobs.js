@@ -102,6 +102,7 @@ const executeSingleAMOOrder = async (order) => {
       "warning",
       "Order Not Placed",
       `Your ${order.trade_type} order for ${order.instrument_key} has been failed because you have only ${totalComplementaryQuantity} quantity in your holdings`,
+      "amoExecuted",
     );
     return;
   }
@@ -118,6 +119,7 @@ const executeSingleAMOOrder = async (order) => {
       "warning",
       "Order Not Placed",
       `Your ${order.trade_type} order for ${order.instrument_key} has been failed due to insufficient funds`,
+      "amoExecuted",
     );
     return;
   }
@@ -159,6 +161,7 @@ const executeSingleAMOOrder = async (order) => {
     "success",
     "After Market Order Executed",
     `Your ${order.trade_type} order for ${order.instrument_key} has been executed at ${currentPrice} x ${order.quantity}`,
+    "amoExecuted",
   );
   order.status = "executed";
   order.executedAt = executedAt;
@@ -268,6 +271,7 @@ export const settleIntradayTrades = async () => {
           "info",
           "Intraday Trade Squared Off",
           `Your ${trade_type} trade for ${instrument_key} has been squared off at ${currentPrice} x ${totalQuantity}`,
+          "amoExecuted",
         );
 
         let totalFundsChange = 0;

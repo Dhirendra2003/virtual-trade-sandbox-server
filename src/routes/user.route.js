@@ -8,6 +8,7 @@ import {
   resetPassword,
   updateProfilePicture,
   updateDisplayName,
+  updatePreferences,
 } from "../controller/auth.controller.js";
 import checkLoggedIn from "../middleware/auth.middleware.js";
 import { uploader } from "../utils/multer.js";
@@ -27,5 +28,6 @@ userRoute
   .route("/update-profile-picture")
   .patch(checkLoggedIn, uploader.single("pfp"), updateProfilePicture);
 userRoute.route("/update-display-name").patch(checkLoggedIn, updateDisplayName);
+userRoute.route("/update-preferences").patch(checkLoggedIn, updatePreferences);
 
 export default userRoute;

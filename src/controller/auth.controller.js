@@ -350,3 +350,35 @@ export const updateDisplayName = async (req, resp) => {
     return resp.status(500).json({ message: "Internal server error", success: false });
   }
 };
+
+// ─── Update User Preferences ──────────────────────────────────────────────────
+export const updatePreferences = async (req, resp) => {
+  try {
+    const { preferences } = req.body;
+    if (!preferences) {
+      return resp.status(400).json({ message: "Preferences are required", success: false });
+    }
+
+    const user = await User.findOne({ where: { id: req.user.id } });
+    if (!user) {
+      return resp.status(404).json({ message: "user not found", success: false });
+    }
+
+    // Merge or overwrite preferences
+    user.preferences = preferences;
+    await user.save();
+
+    const userObject = user.toJSON();
+    delete userObject.password;
+    delete userObject.refreshToken;
+
+    return resp.status(200).json({
+      user: userObject,
+      message: "Preferences updated successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+    return resp.status(500).json({ message: "Internal server error", success: false });
+  }
+};

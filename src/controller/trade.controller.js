@@ -143,6 +143,7 @@ export const registerTrade = async (req, resp) => {
         "warning",
         "Order Not Placed",
         "Insufficient Funds to Place this Trade",
+        "tradeExecuted",
       );
       await OrderHistory.create({
         user_id: user.id,
@@ -180,6 +181,7 @@ export const registerTrade = async (req, resp) => {
       "success",
       "Order Executed",
       `Your ${trade_type} order for ${instrument_key} has been executed at ${currentPrice} x ${quantity}`,
+      "tradeExecuted",
     );
 
     // Greedily drain complementary trades one by one
@@ -259,6 +261,7 @@ export const registerTrade = async (req, resp) => {
       "info",
       "After Market Order Placed",
       `Your ${trade_type} order for ${instrument_key} x ${quantity} has been placed as AMO and will be executed on next trading day at 9:15 AM`,
+      "tradeExecuted",
     );
     // make fresh order will be executed by cron job at 9:15 AM
     const newOrder = await OrderHistory.create({
@@ -393,6 +396,7 @@ export const cancelAMOorder = async (req, res) => {
     "success",
     "Order Cancelled",
     `Your ${order.trade_type} order for ${order.instrument_key} ,qty:${order.quantity} has been cancelled`,
+    "tradeExecuted",
   );
   return res.status(200).json({
     message: "Order cancelled successfully",
@@ -489,6 +493,7 @@ export const settleTrade = async (req, res) => {
         "info",
         "After Market Order Placed",
         `Your ${trade_type} order for ${instrument_key} x ${totalQuantity} has been placed as AMO and will be executed on next trading day at 9:15 AM`,
+        "tradeExecuted",
       );
       const order = await OrderHistory.create({
         user_id: user.id,
@@ -525,6 +530,7 @@ export const settleTrade = async (req, res) => {
       "success",
       "Order Executed",
       `Your ${trade_type} order for ${instrument_key} has been executed at ${currentPrice} x ${totalQuantity}`,
+      "tradeExecuted",
     );
 
     // Settle each trade and track total exit value to update user funds
@@ -783,4 +789,117 @@ export const getUserAnalytics = async (req, res) => {
     success: true,
     data: data,
   });
+};
+
+export const downloadUserAnalyticsReport = async (req, res) => {
+  try {
+    const user = req.user;
+    const userName = await User.findByPk(user.id, {
+      attributes: ["name"],
+      raw: true,
+    });
+
+    const [trades] = await dbManager.getInstance().query(`
+      SELECT sp_pnl_analytics(${user.id});
+      SELECT sp_trade_insights(${user.id});
+      SELECT sp_portfolio_distribution(${user.id});
+      SELECT sp_consistency_heatmap(${user.id});
+    `);
+
+    const analyticsData = {
+      pnl_bar_chart: trades[0].sp_pnl_analytics,
+      trade_rankings_table: trades[1].sp_trade_insights,
+      distribution_pie_chart: trades[2].sp_portfolio_distribution,
+      consistency_heatmap: trades[3].sp_consistency_heatmap,
+    };
+
+    // 1. P&L Sheet Specification
+    const pnlSpec = {
+      createdAt: { displayName: "Date", headerStyle: {}, width: 150 },
+      profit: { displayName: "Profit", headerStyle: {}, width: 100 },
+      profit_perc: { displayName: "Profit %", headerStyle: {}, width: 100 },
+    };
+
+    // 2. Trade Rankings Sheet Specification
+    const rankingSpec = {
+      name: { displayName: "Stock Name", headerStyle: {}, width: 200 },
+      trade_count: { displayName: "Trade Count", headerStyle: {}, width: 100 },
+      profit: { displayName: "Profit", headerStyle: {}, width: 100 },
+      profit_perc: { displayName: "Profit %", headerStyle: {}, width: 100 },
+    };
+
+    // 3. Distribution Sheet Specification
+    const distSpec = {
+      name: { displayName: "Stock Name", headerStyle: {}, width: 200 },
+      total: { displayName: "Total Value", headerStyle: {}, width: 150 },
+      trade_duration: { displayName: "Duration", headerStyle: {}, width: 100 },
+    };
+
+    // 4. Heatmap Sheet Specification
+    const heatmapSpec = {
+      trade_date: { displayName: "Date", headerStyle: {}, width: 150 },
+      total_profit: {
+        displayName: "Total Profit",
+        headerStyle: {},
+        width: 120,
+      },
+      total_trades: {
+        displayName: "Total Trades",
+        headerStyle: {},
+        width: 100,
+      },
+      win_trades: { displayName: "Win Trades", headerStyle: {}, width: 100 },
+      loss_trades: { displayName: "Loss Trades", headerStyle: {}, width: 100 },
+    };
+
+    console.log(analyticsData.pnl_bar_chart?.all_trades);
+
+    const report = excel.buildExport([
+      {
+        name: "P_and_L_Summary",
+        specification: pnlSpec,
+        data: analyticsData.pnl_bar_chart?.all_trades || [],
+      },
+      {
+        name: "Most Traded",
+        specification: {
+          name: { displayName: "Stock Name", headerStyle: {}, width: 200 },
+          trade_count: { displayName: "Count", headerStyle: {}, width: 100 },
+        },
+        data: analyticsData.trade_rankings_table?.most_traded || [],
+      },
+      {
+        name: "Top Profit Amount",
+        specification: rankingSpec,
+        data: analyticsData.trade_rankings_table?.top_profit_amount || [],
+      },
+      {
+        name: "Top Profit Percent",
+        specification: rankingSpec,
+        data: analyticsData.trade_rankings_table?.top_profit_percent || [],
+      },
+      {
+        name: "Portfolio Distribution",
+        specification: distSpec,
+        data: analyticsData.distribution_pie_chart?.delivery_allocation || [],
+      },
+      {
+        name: "Consistency Heatmap",
+        specification: heatmapSpec,
+        data: analyticsData.consistency_heatmap?.heatmap || [],
+      },
+    ]);
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.attachment(`${userName.name} Analytics Report.xlsx`);
+    return res.status(200).send(report);
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
 };
