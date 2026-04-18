@@ -13,6 +13,7 @@ import stocksRoute from "./routes/stocks.routes.js";
 import watchlistRoute from "./routes/watchlist.routes.js";
 import tradeRoute from "./routes/trade.routes.js";
 import notificationRoute from "./routes/notifications.route.js";
+import paymentRoute from "./routes/payment.routes.js";
 
 const app = express();
 const frontendURL = ENV_VARIABLES.FRONTEND_URL;
@@ -36,6 +37,7 @@ app.use("/api/v1/stocks/", stocksRoute);
 app.use("/api/v1/watchlist/", watchlistRoute);
 app.use("/api/v1/trade/", tradeRoute);
 app.use("/api/v1/notification/", notificationRoute);
+app.use("/api/v1/payment/", paymentRoute);
 
 app.get("/", (req, res) => {
   res.json("Hello, World!");

@@ -585,14 +585,14 @@ export const settleTrade = async (req, res) => {
 
 export const getPortfolioStats = async (req, res) => {
   const user = req.user;
-  const INITIAL_FUNDS = 1000000; // 10 lakh starting capital
 
   try {
     // 1. Fetch user funds
     const userRecord = await User.findByPk(user.id, {
-      attributes: ["funds"],
+      attributes: ["funds", "actualFunds"],
     });
     const currentFunds = parseFloat(userRecord.funds);
+    const INITIAL_FUNDS = parseFloat(userRecord.actualFunds);
 
     // 2. Fetch grouped open trades from stored procedure (same as getTrades)
     const [trades] = await dbManager

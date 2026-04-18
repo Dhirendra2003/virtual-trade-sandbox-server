@@ -62,6 +62,11 @@ const User = sequelize.define(
       allowNull: false,
       defaultValue: 1000000,
     },
+    actualFunds: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 1000000,
+    },
     preferences: {
       type: DataTypes.JSON,
       allowNull: true,
