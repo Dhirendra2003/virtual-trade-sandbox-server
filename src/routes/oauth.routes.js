@@ -36,7 +36,7 @@ router.get(
 
       createNotification(
         user.id,
-        "success",
+        "info",
         "New Login Detected",
         `Welcome back ${user.name}!`,
       );
@@ -98,7 +98,7 @@ router.get(
 
       createNotification(
         user.id,
-        "success",
+        "info",
         "New Login Detected",
         `Welcome back ${user.name}!`,
       );

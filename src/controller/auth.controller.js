@@ -102,7 +102,7 @@ export const login = async (req, resp) => {
     delete userObject.refreshToken;
     createNotification(
       user.id,
-      "success",
+      "info",
       "New Login Detected",
       `Welcome back ${userObject.name}!`,
     );
@@ -285,7 +285,7 @@ export const updateProfilePicture = async (req, resp) => {
 
   createNotification(
     user.id,
-    "success",
+    "info",
     "Profile Picture Updated",
     "Your profile photo has been changed successfully.",
   );
