@@ -3,6 +3,8 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as FacebookStrategy } from "passport-facebook";
 import passport from "passport";
 import User from "../models/User.js";
+import { sendEmail } from "../services/mailService.js";
+import welcomMail from "../mailTemplates/welcome-mail.js";
 
 passport.use(
   new GoogleStrategy(
@@ -29,6 +31,19 @@ passport.use(
               email: profile.emails[0].value,
               profilePicURL: profile.photos[0].value,
             });
+
+            // Send Welcome Email
+            try {
+              const htmlContent = welcomMail(user.name);
+              sendEmail(
+                user.email,
+                "Welcome to Virtual Trade Sandbox! 🚀",
+                `Hi ${user.name}, welcome aboard! We're excited to have you here.`,
+                htmlContent,
+              ).catch((err) => console.error("Error sending welcome email:", err));
+            } catch (error) {
+              console.error("Error sending welcome email:", error);
+            }
             // console.log("PROFILE", profile);
             // console.log("USER CREATED SUCCESSFULLY", user);
           }
@@ -71,6 +86,19 @@ passport.use(
               email: profile.emails[0].value,
               profilePicURL: profile.photos[0].value,
             });
+
+            // Send Welcome Email
+            try {
+              const htmlContent = welcomMail(user.name);
+              sendEmail(
+                user.email,
+                "Welcome to Virtual Trade Sandbox! 🚀",
+                `Hi ${user.name}, welcome aboard! We're excited to have you here.`,
+                htmlContent,
+              ).catch((err) => console.error("Error sending welcome email:", err));
+            } catch (error) {
+              console.error("Error sending welcome email:", error);
+            }
             console.log("USER CREATED SUCCESSFULLY", user);
           }
         } else {

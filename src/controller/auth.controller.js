@@ -6,6 +6,8 @@ import { getAccessToken, getRefreshToken } from "../utils/generateTokens.js";
 import cloudinary from "../utils/cloudinary.js";
 import { DURATIONS } from "../utils/constants.js";
 import createNotification from "../services/userNotification.service.js";
+import { sendEmail } from "../services/mailService.js";
+import welcomMail from "../mailTemplates/welcome-mail.js";
 
 export const register = async (req, resp) => {
   let imgresult;
@@ -51,6 +53,19 @@ export const register = async (req, resp) => {
     "Registration Successful",
     "Welcome to Virtual Trade Sandbox ! Start Exploring the Markets",
   );
+
+  // Send Welcome Email
+  try {
+    const htmlContent = welcomMail(user.name);
+    sendEmail(
+      user.email,
+      "Welcome to Virtual Trade Sandbox! 🚀",
+      `Hi ${user.name}, welcome aboard! We're excited to have you here.`,
+      htmlContent,
+    ).catch((err) => console.error("Error sending welcome email:", err));
+  } catch (error) {
+    console.error("Error sending welcome email:", error);
+  }
   return resp
     .status(200)
     .cookie("accesstoken", accessToken, {
