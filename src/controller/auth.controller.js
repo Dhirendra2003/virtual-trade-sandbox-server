@@ -2,12 +2,14 @@ import { ENV_VARIABLES } from "../utils/constants.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { Op } from "sequelize";
 import { getAccessToken, getRefreshToken } from "../utils/generateTokens.js";
 import cloudinary from "../utils/cloudinary.js";
 import { DURATIONS } from "../utils/constants.js";
 import createNotification from "../services/userNotification.service.js";
 import { sendEmail } from "../services/mailService.js";
 import welcomMail from "../mailTemplates/welcome-mail.js";
+import resetPasswordMail from "../mailTemplates/reset-password-mail.js";
 
 export const register = async (req, resp) => {
   let imgresult;
@@ -276,6 +278,111 @@ export const resetPassword = async (req, resp) => {
     .json({ message: "Password updated successfully", success: true });
 };
 
+export const forgotPassword = async (req, resp) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return resp.status(400).json({
+      message: "Email is required",
+      success: false,
+    });
+  }
+
+  const successResponse = {
+    message: "If an account exists for this email, a reset link has been sent.",
+    success: true,
+  };
+
+  const user = await User.findOne({ where: { email } });
+  if (!user || !user.password) {
+    return resp.status(200).json(successResponse);
+  }
+
+  const token = jwt.sign(
+    { userId: user.id, email: user.email },
+    ENV_VARIABLES.RESET_PASSWORD_JWT_SECRET,
+    { expiresIn: DURATIONS.RESET_PASSWORD_TOKEN_DURATION },
+  );
+
+  const expiresAt = new Date(
+    Date.now() + DURATIONS.RESET_PASSWORD_TOKEN_DURATION_MS,
+  );
+
+  user.reset_password_token = token;
+  user.reset_password_expires = expiresAt;
+  await user.save();
+
+  const resetLink = `${ENV_VARIABLES.FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}`;
+  const htmlContent = resetPasswordMail(user.name, resetLink);
+
+  sendEmail(
+    user.email,
+    "Reset your Virtual Trade Sandbox password",
+    `Reset your password using this link: ${resetLink}`,
+    htmlContent,
+  ).catch((error) =>
+    console.error("Error sending reset password email:", error),
+  );
+
+  return resp.status(200).json(successResponse);
+};
+
+export const resetPasswordWithToken = async (req, resp) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return resp.status(400).json({
+      message: "Token and new password are required",
+      success: false,
+    });
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, ENV_VARIABLES.RESET_PASSWORD_JWT_SECRET);
+  } catch (error) {
+    return resp.status(400).json({
+      message: "Reset link is invalid or has expired",
+      success: false,
+    });
+  }
+
+  const user = await User.findOne({
+    where: {
+      id: decoded.userId,
+      reset_password_token: token,
+      reset_password_expires: {
+        [Op.gt]: new Date(),
+      },
+    },
+  });
+
+  if (!user) {
+    return resp.status(400).json({
+      message: "Reset link is invalid or has expired",
+      success: false,
+    });
+  }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  user.reset_password_token = null;
+  user.reset_password_expires = null;
+  user.refreshToken = null;
+  await user.save();
+
+  createNotification(
+    user.id,
+    "warning",
+    "Password Reset Successful",
+    "Your account password was reset successfully.",
+  );
+
+  return resp.status(200).json({
+    message: "Password reset successfully",
+    success: true,
+  });
+};
+
 // ─── Update Profile Picture ───────────────────────────────────────────────────
 export const updateProfilePicture = async (req, resp) => {
   if (!req.file) {
@@ -382,7 +489,7 @@ export const getUserStartingFunds = async (req, resp) => {
     where: {
       id: user.id,
     },
-    attributes: ["actualFunds"],
+    attributes: ["actualFunds", "funds"],
   });
   if (!user) {
     return resp.status(404).json({ message: "user not found", success: false });

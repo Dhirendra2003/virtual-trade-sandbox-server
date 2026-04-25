@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import passport from "passport";
 import userRoute from "./routes/user.route.js";
+import authRoute from "./routes/auth.routes.js";
 import oauthRoute from "./routes/oauth.routes.js";
 import "./utils/passport.js";
 import errorHandler from "./middleware/errorHandler.middleware.js";
@@ -32,6 +33,7 @@ app.use(passport.initialize());
 
 //Routes
 app.use("/api/v1/oauth/", oauthRoute);
+app.use("/api/v1/auth/", authRoute);
 app.use("/api/v1/user/", userRoute);
 app.use("/api/v1/stocks/", stocksRoute);
 app.use("/api/v1/watchlist/", watchlistRoute);

@@ -652,7 +652,7 @@ export const getPortfolioStats = async (req, res) => {
         total_current_value: parseFloat(totalCurrentValue.toFixed(2)),
         unrealized_pnl: parseFloat(unrealizedPnl.toFixed(2)),
         overall_pnl: parseFloat(overallPnl.toFixed(2)),
-        // positions: allPositions,
+        positions_count: allPositions.length,
       },
     });
   } catch (error) {

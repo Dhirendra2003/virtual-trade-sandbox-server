@@ -1,5 +1,6 @@
 import {
   getUserNotifications,
+  getAllUserNotifications,
   markAllAsRead,
 } from "../controller/notification.controller.js";
 import express from "express";
@@ -11,6 +12,9 @@ const notificationRoute = express.Router();
 notificationRoute
   .route("/get-user-notifications")
   .get(checkLoggedIn, getUserNotifications);
+notificationRoute
+  .route("/get-all-user-notifications")
+  .get(checkLoggedIn, getAllUserNotifications);
 notificationRoute
   .route("/mark-all-notifications-as-read")
   .post(checkLoggedIn, markAllAsRead);

@@ -15,6 +15,20 @@ export const getUserNotifications = async (req, resp) => {
   });
 };
 
+export const getAllUserNotifications = async (req, resp) => {
+  const userId = req.user.id;
+  const notifications = await Notification.findAll({
+    where: {
+      user_id: userId,
+    },
+    order: [["createdAt", "DESC"]],
+  });
+  return resp.status(200).json({
+    data: notifications,
+    success: true,
+  });
+};
+
 export const markAllAsRead = async (req, resp) => {
   const userId = req.user.id;
   await Notification.update(

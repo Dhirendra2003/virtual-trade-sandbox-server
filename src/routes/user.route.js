@@ -5,7 +5,9 @@ import {
   logout,
   refreshAccessToken,
   register,
+  forgotPassword,
   resetPassword,
+  resetPasswordWithToken,
   updateProfilePicture,
   updateDisplayName,
   updatePreferences,
@@ -18,6 +20,8 @@ const userRoute = express.Router();
 
 userRoute.route("/register").post(uploader.single("pfp"), register);
 userRoute.route("/login").post(login);
+userRoute.route("/forgot-password").post(forgotPassword);
+userRoute.route("/reset-password-with-token").post(resetPasswordWithToken);
 userRoute.route("/get-user-data").get(checkLoggedIn, getData);
 userRoute.route("/data").get(checkLoggedIn, getData);
 userRoute.route("/refresh-token").get(refreshAccessToken);

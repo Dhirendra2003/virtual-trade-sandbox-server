@@ -48,6 +48,14 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    reset_password_token: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    reset_password_expires: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     profilePicURL: {
       type: DataTypes.STRING,
       allowNull: true,

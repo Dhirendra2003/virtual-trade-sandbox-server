@@ -4,8 +4,10 @@ const isProduction = process.env.NODE_ENV === "production";
 export const DURATIONS = {
   ACCESS_TOKEN_DURATION: "30m",
   REFRESH_TOKEN_DURATION: "7d",
+  RESET_PASSWORD_TOKEN_DURATION: "15m",
   ACCESS_TOKEN_COOKIE_DURATION: 30 * 60 * 1000, // 30 minutes
   REFRESH_TOKEN_COOKIE_DURATION: 7 * 24 * 60 * 60 * 1000, // 7 days
+  RESET_PASSWORD_TOKEN_DURATION_MS: 15 * 60 * 1000, // 15 minutes
 };
 
 export const COOKIE_OPTIONS = {
@@ -40,6 +42,8 @@ export const ENV_VARIABLES = {
   //tokens secrets
   REF_JWT_SECRET: process.env.REF_JWT_SECRET,
   ACC_JWT_SECRET: process.env.ACC_JWT_SECRET,
+  RESET_PASSWORD_JWT_SECRET:
+    process.env.RESET_PASSWORD_JWT_SECRET || process.env.ACC_JWT_SECRET,
   //auth ids,secrets
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
