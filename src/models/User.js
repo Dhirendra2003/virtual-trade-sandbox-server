@@ -56,6 +56,15 @@ const User = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    isVerified: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    verificationToken: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     profilePicURL: {
       type: DataTypes.STRING,
       allowNull: true,

@@ -10,6 +10,7 @@ import createNotification from "../services/userNotification.service.js";
 import { sendEmail } from "../services/mailService.js";
 import welcomMail from "../mailTemplates/welcome-mail.js";
 import resetPasswordMail from "../mailTemplates/reset-password-mail.js";
+import verifyEmailMail from "../mailTemplates/verify-email-mail.js";
 
 export const register = async (req, resp) => {
   let imgresult;
@@ -40,49 +41,36 @@ export const register = async (req, resp) => {
     dateOfBirth: dateofbirth,
     profilePicURL: imgresult?.url || "",
   });
-  const accessToken = getAccessToken(user.id, user.email);
-  const refreshToken = getRefreshToken(user.id, user.email);
 
-  user.refreshToken = refreshToken;
+  // Generate verification JWT (Option C: type claim prevents cross-use with reset-password tokens)
+  const verificationToken = jwt.sign(
+    { userId: user.id, email: user.email, type: "email-verification" },
+    ENV_VARIABLES.RESET_PASSWORD_JWT_SECRET,
+    { expiresIn: "24h" },
+  );
+  user.verificationToken = verificationToken;
   await user.save();
 
-  const userObject = user.toJSON();
-  delete userObject.password;
-  delete userObject.refreshToken;
-  createNotification(
-    user.id,
-    "success",
-    "Registration Successful",
-    "Welcome to Virtual Trade Sandbox ! Start Exploring the Markets",
-  );
-
-  // Send Welcome Email
+  // Send Verification Email
   try {
-    const htmlContent = welcomMail(user.name);
+    const verifyLink = `${ENV_VARIABLES.FRONTEND_URL}/verify-email?token=${encodeURIComponent(verificationToken)}`;
+    const htmlContent = verifyEmailMail(user.name, verifyLink);
     sendEmail(
       user.email,
-      "Welcome to Virtual Trade Sandbox! 🚀",
-      `Hi ${user.name}, welcome aboard! We're excited to have you here.`,
+      "Verify your Virtual Trade Sandbox email",
+      `Please verify your email using this link: ${verifyLink}`,
       htmlContent,
-    ).catch((err) => console.error("Error sending welcome email:", err));
+    ).catch((err) => console.error("Error sending verification email:", err));
   } catch (error) {
-    console.error("Error sending welcome email:", error);
+    console.error("Error sending verification email:", error);
   }
+
   return resp
     .status(200)
-    .cookie("accesstoken", accessToken, {
-      httpOnly: true,
-      secure: false, // Only send cookie over HTTPS
-      sameSite: "lax", // Allows cross-origin requests
-      maxAge: 1 * 60 * 1000,
-    })
-    .cookie("refreshtoken", refreshToken, {
-      httpOnly: true,
-      secure: false, // Only send cookie over HTTPS
-      sameSite: "lax", // Allows cross-origin requests
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    })
-    .json({ user: userObject, message: "user registered", success: true });
+    .json({
+      message: "Registration successful. Please verify your email.",
+      success: true,
+    });
 };
 
 export const login = async (req, resp) => {
@@ -103,6 +91,15 @@ export const login = async (req, resp) => {
     return resp.status(403).json({
       message:
         "This account was created using social login. Please login with Google or Facebook.",
+      success: false,
+    });
+  }
+
+  // Block login for unverified email accounts
+  if (!user.isVerified) {
+    return resp.status(403).json({
+      message:
+        "Please verify your email before logging in. A verification mail has been sent to your email address.",
       success: false,
     });
   }
@@ -231,6 +228,116 @@ export const getData = async (req, resp) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     })
     .json({ user: userObject, message: "login success", success: true });
+};
+
+// ─── Verify Email ────────────────────────────────────────────────────────────
+export const verifyEmail = async (req, resp) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return resp
+      .status(400)
+      .json({ message: "Token is required", success: false });
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, ENV_VARIABLES.RESET_PASSWORD_JWT_SECRET);
+  } catch (error) {
+    return resp.status(400).json({
+      message: "Verification link is invalid or has expired",
+      success: false,
+    });
+  }
+
+  if (decoded.type !== "email-verification") {
+    return resp
+      .status(400)
+      .json({ message: "Invalid token type", success: false });
+  }
+
+  const user = await User.findOne({
+    where: { id: decoded.userId, verificationToken: token },
+  });
+
+  if (!user) {
+    return resp.status(400).json({
+      message: "Verification link is invalid or already used",
+      success: false,
+    });
+  }
+
+  user.isVerified = true;
+  user.verificationToken = null;
+  await user.save();
+
+  // Send Welcome Email upon successful verification
+  try {
+    const htmlContent = welcomMail(user.name);
+    sendEmail(
+      user.email,
+      "Welcome to Virtual Trade Sandbox! 🚀",
+      `Hi ${user.name}, welcome aboard! We're excited to have you here.`,
+      htmlContent,
+    ).catch((err) => console.error("Error sending welcome email:", err));
+  } catch (error) {
+    console.error("Error sending welcome email:", error);
+  }
+
+  return resp
+    .status(200)
+    .json({ message: "Email verified successfully", success: true });
+};
+
+export const resendVerificationEmail = async (req, resp) => {
+  const { token, email } = req.body; // accepts expired token OR email
+  let user;
+
+  if (token) {
+    // decode without verifying (expired tokens are rejected by jwt.verify, so we decode manually)
+    try {
+      const decoded = jwt.decode(token);
+      if (decoded?.userId) {
+        user = await User.findOne({ where: { id: decoded.userId } });
+      }
+    } catch (_) {
+      /* ignore */
+    }
+  } else if (email) {
+    user = await User.findOne({ where: { email } });
+  }
+
+  if (!user) {
+    return resp.status(404).json({ message: "User not found", success: false });
+  }
+
+  if (user.isVerified) {
+    return resp
+      .status(400)
+      .json({ message: "Email is already verified", success: false });
+  }
+
+  const newToken = jwt.sign(
+    { userId: user.id, email: user.email, type: "email-verification" },
+    ENV_VARIABLES.RESET_PASSWORD_JWT_SECRET,
+    { expiresIn: "24h" },
+  );
+  user.verificationToken = newToken;
+  await user.save();
+
+  const verifyLink = `${ENV_VARIABLES.FRONTEND_URL}/verify-email?token=${encodeURIComponent(newToken)}`;
+  const htmlContent = verifyEmailMail(user.name, verifyLink);
+
+  sendEmail(
+    user.email,
+    "Verify your Virtual Trade Sandbox email",
+    `Please verify your email using this link: ${verifyLink}`,
+    htmlContent,
+  ).catch((err) => console.error("Error sending verification email:", err));
+
+  return resp
+    .status(200)
+    .json({ message: "Verification email resent successfully", success: true });
 };
 
 // ─── Reset Password ───────────────────────────────────────────────────────────

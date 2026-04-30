@@ -183,6 +183,9 @@ const welcomMail = (
                   <h2 style="font-size: 28px; line-height: 36px; margin: 0; color: #ffffff;">
                     Welcome aboard, ${userName.toUpperCase()} 🚀
                   </h2>
+                   <p style="text-align: center; margin: 16px 0 0 0;">
+                    <span style="display: inline-block; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: #22c55e; font-size: 13px; font-weight: 600; padding: 8px 20px; border-radius: 50px; white-space: nowrap;">Your email address has been verified successfully.</span>
+                  </p>
                   <div class="motivation-quote">
                     "Trading isn't just about the charts; it's about the
                     discipline to follow your plan. Practice here, so you can

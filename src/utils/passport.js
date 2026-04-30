@@ -27,6 +27,7 @@ passport.use(
             console.log("USER CREATED");
             user = await User.create({
               googleId: profile.id,
+              isVerified: true, // OAuth emails are pre-verified
               name: profile.displayName,
               email: profile.emails[0].value,
               profilePicURL: profile.photos[0].value,
@@ -40,7 +41,9 @@ passport.use(
                 "Welcome to Virtual Trade Sandbox! 🚀",
                 `Hi ${user.name}, welcome aboard! We're excited to have you here.`,
                 htmlContent,
-              ).catch((err) => console.error("Error sending welcome email:", err));
+              ).catch((err) =>
+                console.error("Error sending welcome email:", err),
+              );
             } catch (error) {
               console.error("Error sending welcome email:", error);
             }
@@ -82,6 +85,7 @@ passport.use(
             console.log(profile);
             user = await User.create({
               facebookId: profile.id,
+              isVerified: true, // OAuth emails are pre-verified
               name: profile.displayName,
               email: profile.emails[0].value,
               profilePicURL: profile.photos[0].value,
@@ -95,7 +99,9 @@ passport.use(
                 "Welcome to Virtual Trade Sandbox! 🚀",
                 `Hi ${user.name}, welcome aboard! We're excited to have you here.`,
                 htmlContent,
-              ).catch((err) => console.error("Error sending welcome email:", err));
+              ).catch((err) =>
+                console.error("Error sending welcome email:", err),
+              );
             } catch (error) {
               console.error("Error sending welcome email:", error);
             }

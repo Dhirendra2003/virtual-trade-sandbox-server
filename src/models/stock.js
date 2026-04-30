@@ -18,7 +18,6 @@ const Stock = sequelize.define(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     exchange: {
       type: DataTypes.STRING,
@@ -31,7 +30,6 @@ const Stock = sequelize.define(
     trading_symbol: {
       type: DataTypes.STRING,
       allowNull: true,
-      unique: true,
     },
     short_name: {
       type: DataTypes.STRING,

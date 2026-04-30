@@ -591,8 +591,8 @@ export const getPortfolioStats = async (req, res) => {
     const userRecord = await User.findByPk(user.id, {
       attributes: ["funds", "actualFunds"],
     });
-    const currentFunds = parseFloat(userRecord.funds);
-    const INITIAL_FUNDS = parseFloat(userRecord.actualFunds);
+    const currentFunds = parseFloat(userRecord?.funds);
+    const INITIAL_FUNDS = parseFloat(userRecord?.actualFunds);
 
     // 2. Fetch grouped open trades from stored procedure (same as getTrades)
     const [trades] = await dbManager

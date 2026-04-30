@@ -1,5 +1,6 @@
 import Stock from "../models/Stock.js";
-import stocksData from "../data/NSE_MIS_Data.json" with { type: "json" };
+import stocksDataNSE from "../data/NSE_MIS.json" with { type: "json" };
+import stocksDataBSE from "../data/BSE_MIS.json" with { type: "json" };
 import { Op, Sequelize } from "sequelize";
 import Watchlist from "../models/watchlist.js";
 import {
@@ -355,10 +356,21 @@ If real-time data is unavailable, use most recent closing price and clearly base
 };
 
 export const saveStocksData = async (req, resp) => {
-  await Stock.bulkCreate(stocksData);
+  const allStocks = [...stocksDataBSE, ...stocksDataNSE];
+  await Stock.bulkCreate(allStocks, {
+    updateOnDuplicate: [
+      "segment",
+      "name",
+      "exchange",
+      "instrument_type",
+      "trading_symbol",
+      "short_name",
+    ],
+  });
 
-  return resp
-    .status(200)
-
-    .json({ message: "stocks data saved", success: true });
+  return resp.status(200).json({
+    message: "stocks data saved",
+    success: true,
+    count: allStocks.length,
+  });
 };
