@@ -1,4 +1,4 @@
-import Stock from "../models/Stock.js";
+import Stock from "../models/stock.js";
 import Watchlist from "../models/watchlist.js";
 import { Op } from "sequelize";
 import moment from "moment";

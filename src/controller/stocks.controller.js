@@ -1,4 +1,4 @@
-import Stock from "../models/Stock.js";
+import Stock from "../models/stock.js";
 import stocksDataNSE from "../data/NSE_MIS.json" with { type: "json" };
 import stocksDataBSE from "../data/BSE_MIS.json" with { type: "json" };
 import { Op, Sequelize } from "sequelize";

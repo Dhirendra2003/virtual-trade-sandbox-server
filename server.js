@@ -6,7 +6,7 @@ import cron from "node-cron";
 
 // Import models
 import User from "./src/models/User.js";
-import Stock from "./src/models/Stock.js";
+import Stock from "./src/models/stock.js";
 import Watchlist from "./src/models/watchlist.js";
 import Trade from "./src/models/Trade.js";
 import OrderHistory from "./src/models/Order.js";
