@@ -3,11 +3,14 @@ import logger from "../utils/errorLogger.js";
 // 1. Create a transporter
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: process.env.SMTP_PORT || 465,
-  secure: true,
+  port: Number(process.env.SMTP_PORT) || 587,
+  secure: process.env.SMTP_PORT == 465, // Only true for port 465
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false, // Helps with some hosting provider restrictions
   },
 });
 /**
