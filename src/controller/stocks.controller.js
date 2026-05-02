@@ -195,7 +195,7 @@ export const getTrendingStocks = async (req, resp) => {
         " ",
         "g",
       ),
-      { [Op.iLike]: `%${searchName}%` },
+      { [Op.iLike]: `${searchName}%` },
     );
   };
   const modifiedGainersData = await Promise.all(
