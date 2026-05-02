@@ -3,10 +3,18 @@ import {
   executeAMOorders,
   settleIntradayTrades,
 } from "./jobs/stockCronjobs.js";
+import { sendWeeklyReports } from "./jobs/weeklyReportCronjob.js";
 
 const startCronJobs = async (cronType) => {
   try {
     console.log("Starting cron jobs...", cronType);
+
+    // Weekly report does not depend on market status — run independently
+    if (cronType === "sendWeeklyReports") {
+      await sendWeeklyReports();
+      return;
+    }
+
     const marketStatus = await getMarketStatusAPI();
     const isMarketOpen = marketStatus?.data?.status === "NORMAL_OPEN";
 

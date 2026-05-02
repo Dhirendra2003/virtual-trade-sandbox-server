@@ -19,6 +19,10 @@ cron.schedule("16 9 * * 1-5", async () => {
 cron.schedule("15 15 * * 1-5", async () => {
   await startCronJobs("settleIntradayTrades");
 });
+// Weekly report — every Sunday at 9:00 AM
+cron.schedule("0 9 * * 0", async () => {
+  await startCronJobs("sendWeeklyReports");
+});
 
 console.log("Cron worker started");
 

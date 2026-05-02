@@ -52,7 +52,7 @@ passport.use(
           }
         } else {
           //still update user pfp
-          user.profilePicURL = profile.photos[0].value;
+          // user.profilePicURL = profile.photos[0].value;
           await user.save();
         }
         return cb(null, user);
@@ -109,7 +109,7 @@ passport.use(
           }
         } else {
           //still update user pfp
-          user.profilePicURL = profile.photos[0].value;
+          // user.profilePicURL = profile.photos[0].value;
           await user.save();
         }
         return cb(null, user);
