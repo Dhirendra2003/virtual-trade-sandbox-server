@@ -11,20 +11,21 @@ import { sendEmail } from "../services/mailService.js";
 import welcomMail from "../mailTemplates/welcome-mail.js";
 import resetPasswordMail from "../mailTemplates/reset-password-mail.js";
 import verifyEmailMail from "../mailTemplates/verify-email-mail.js";
+import logger from "../utils/errorLogger.js";
 
 export const register = async (req, resp) => {
   let imgresult;
   if (req.file) {
     imgresult = await cloudinary.uploader.upload(req.file.path);
   }
-  console.log("### result", imgresult);
+
   const { username, email, password, phone, dateofbirth } = req.body;
   if (!username || !email || !password || !dateofbirth) {
     return resp
       .status(401)
       .json({ message: "something is missing", success: false });
   }
-  // console.log(username, email, password, phone, dateofbirth);
+
   const userExist = await User.findOne({ where: { email: email } });
   if (userExist) {
     return resp
@@ -60,17 +61,15 @@ export const register = async (req, resp) => {
       "Verify your Virtual Trade Sandbox email",
       `Please verify your email using this link: ${verifyLink}`,
       htmlContent,
-    ).catch((err) => console.error("Error sending verification email:", err));
+    ).catch((err) => logger.error("Error sending verification email:", err));
   } catch (error) {
-    console.error("Error sending verification email:", error);
+    logger.error("Error sending verification email:", error);
   }
 
-  return resp
-    .status(200)
-    .json({
-      message: "Registration successful. Please verify your email.",
-      success: true,
-    });
+  return resp.status(200).json({
+    message: "Registration successful. Please verify your email.",
+    success: true,
+  });
 };
 
 export const login = async (req, resp) => {
@@ -80,7 +79,6 @@ export const login = async (req, resp) => {
       .status(401)
       .json({ message: "something is missing", success: false });
   }
-  console.log(email, password);
   const user = await User.findOne({ where: { email: email } });
   if (!user) {
     return resp.status(404).json({ message: "user not found", success: false });
@@ -279,9 +277,9 @@ export const verifyEmail = async (req, resp) => {
       "Welcome to Virtual Trade Sandbox! 🚀",
       `Hi ${user.name}, welcome aboard! We're excited to have you here.`,
       htmlContent,
-    ).catch((err) => console.error("Error sending welcome email:", err));
+    ).catch((err) => logger.error("Error sending welcome email:", err));
   } catch (error) {
-    console.error("Error sending welcome email:", error);
+    logger.error("Error sending welcome email:", error);
   }
 
   return resp
@@ -333,7 +331,7 @@ export const resendVerificationEmail = async (req, resp) => {
     "Verify your Virtual Trade Sandbox email",
     `Please verify your email using this link: ${verifyLink}`,
     htmlContent,
-  ).catch((err) => console.error("Error sending verification email:", err));
+  ).catch((err) => logger.error("Error sending verification email:", err));
 
   return resp
     .status(200)
@@ -428,7 +426,7 @@ export const forgotPassword = async (req, resp) => {
     `Reset your password using this link: ${resetLink}`,
     htmlContent,
   ).catch((error) =>
-    console.error("Error sending reset password email:", error),
+    logger.error("Error sending reset password email:", error),
   );
 
   return resp.status(200).json(successResponse);

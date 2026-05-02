@@ -2,6 +2,7 @@ import Stock from "../models/Stock.js";
 import Watchlist from "../models/watchlist.js";
 import { Op } from "sequelize";
 import moment from "moment";
+import logger from "../utils/errorLogger.js";
 
 export const getUserWatchlist = async (req, resp) => {
   const userId = req.user.id;
@@ -46,7 +47,7 @@ export const addToWatchlist = async (req, resp) => {
       success: true,
     });
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     return resp.status(500).json({
       message: "Internal server error",
       success: false,

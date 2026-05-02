@@ -5,6 +5,7 @@ import passport from "passport";
 import User from "../models/User.js";
 import { sendEmail } from "../services/mailService.js";
 import welcomMail from "../mailTemplates/welcome-mail.js";
+import logger from "./errorLogger.js";
 
 passport.use(
   new GoogleStrategy(
@@ -24,7 +25,7 @@ passport.use(
             user.googleId = profile.id; // link google id to existing user in case of email already exists in db
             await user.save();
           } else {
-            console.log("USER CREATED");
+            logger.info("USER CREATED");
             user = await User.create({
               googleId: profile.id,
               isVerified: true, // OAuth emails are pre-verified
@@ -42,10 +43,10 @@ passport.use(
                 `Hi ${user.name}, welcome aboard! We're excited to have you here.`,
                 htmlContent,
               ).catch((err) =>
-                console.error("Error sending welcome email:", err),
+                logger.error("Error sending welcome email:", err),
               );
             } catch (error) {
-              console.error("Error sending welcome email:", error);
+              logger.error("Error sending welcome email:", error);
             }
             // console.log("PROFILE", profile);
             // console.log("USER CREATED SUCCESSFULLY", user);
@@ -82,7 +83,7 @@ passport.use(
             user.facebookId = profile.id; // link fb id to existing user in case of email already exists in db
             await user.save();
           } else {
-            console.log(profile);
+            // console.log(profile);
             user = await User.create({
               facebookId: profile.id,
               isVerified: true, // OAuth emails are pre-verified
@@ -100,12 +101,12 @@ passport.use(
                 `Hi ${user.name}, welcome aboard! We're excited to have you here.`,
                 htmlContent,
               ).catch((err) =>
-                console.error("Error sending welcome email:", err),
+                logger.error("Error sending welcome email:", err),
               );
             } catch (error) {
-              console.error("Error sending welcome email:", error);
+              logger.error("Error sending welcome email:", error);
             }
-            console.log("USER CREATED SUCCESSFULLY", user);
+            logger.info("USER CREATED SUCCESSFULLY", user);
           }
         } else {
           //still update user pfp

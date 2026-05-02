@@ -1,5 +1,6 @@
 import Notification from "../models/Notification.js";
 import User from "../models/User.js";
+import logger from "../utils/errorLogger.js";
 
 const createNotification = async (
   user_id,
@@ -15,7 +16,7 @@ const createNotification = async (
       if (user && user.preferences && user.preferences.notifications) {
         const isEnabled = user.preferences.notifications[preferenceType];
         if (isEnabled === false) {
-          console.log(
+          logger.info(
             `Skipping notification for user ${user_id}: ${preferenceType} is disabled`,
           );
           return null;
@@ -31,8 +32,7 @@ const createNotification = async (
     });
     return notification;
   } catch (error) {
-    console.error("Error creating notification:", error);
-    // Don't throw error to prevent crashing callers (like cron jobs)
+    logger.error("Error creating notification:", error);
     return null;
   }
 };

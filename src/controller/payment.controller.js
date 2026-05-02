@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import User from "../models/User.js";
+import logger from "../utils/errorLogger.js";
 
 const stripe = new Stripe(process.env.STR_SECRET_KEY);
 
@@ -80,7 +81,7 @@ export const stripeWebhook = async (req, res) => {
     // req.body must be the raw Buffer here (see payment.routes.js)
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err) {
-    console.error("Webhook signature verification failed:", err.message);
+    logger.error("Webhook signature verification failed:", err.message);
     return res.status(400).json({ error: `Webhook Error: ${err.message}` });
   }
 
@@ -94,7 +95,7 @@ export const stripeWebhook = async (req, res) => {
       if (user) {
         await user.increment("actualFunds", { by: amountInRupees });
         await user.increment("funds", { by: amountInRupees });
-        console.log(
+        logger.info(
           `✅ Added ₹${amountInRupees} to user ${userId}. New funds: ${Number(user.actualFunds) + amountInRupees}`,
         );
       }

@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize";
 import config from "./sequelize.cjs";
 import { ENV_VARIABLES } from "../utils/constants.js";
+import logger from "../utils/errorLogger.js";
 
 class DatabaseManager {
   constructor() {
@@ -29,7 +30,7 @@ class DatabaseManager {
     }
     try {
       await this.sequelize.authenticate();
-      console.log("Connection has been established successfully.");
+      logger.info("Connection has been established successfully.");
 
       // Sync database tables based on models
       const env = ENV_VARIABLES.NODE_ENV || "development";
@@ -38,14 +39,16 @@ class DatabaseManager {
       if (env === "development" && syncing) {
         // In development: alter tables to match models (safe, doesn't drop data)
         await this.sequelize.sync({ alter: syncing });
+        logger.info("Database synced successfully (alter mode).");
         console.log("Database synced successfully (alter mode).");
       } else if (env === "production") {
         // In production: NEVER use sync - use migrations instead
-        console.log("Production mode: Skipping sync. Use migrations.");
+        logger.info("Production mode: Skipping sync. Use migrations.");
       }
 
       return this.sequelize;
     } catch (error) {
+      logger.error("Unable to connect to the database:", error);
       console.error("Unable to connect to the database:", error);
       throw error;
     }

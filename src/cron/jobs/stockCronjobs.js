@@ -5,6 +5,7 @@ import User from "../../models/User.js";
 import OrderHistory from "../../models/Order.js";
 import { getLTP } from "../../services/upstox.service.js";
 import createNotification from "../../services/userNotification.service.js";
+import logger from "../../utils/errorLogger.js";
 
 const getCurrentPrice = async (instrumentKey) => {
   const ltpData = await getLTP(instrumentKey);
@@ -62,7 +63,7 @@ const executeSingleAMOOrder = async (order) => {
   const currentPrice = await getCurrentPrice(order.instrument_key);
 
   if (!currentPrice) {
-    console.error(
+    logger.error(
       `Skipping AMO order ${order.id}: unable to fetch LTP for ${order.instrument_key}`,
     );
     return;
@@ -93,7 +94,7 @@ const executeSingleAMOOrder = async (order) => {
     order.trade_type === "sell" &&
     order.quantity > totalComplementaryQuantity
   ) {
-    console.log("QTY EXCEEDED more than holdings", order.id);
+    logger.info("QTY EXCEEDED more than holdings", order.id);
     order.status = "failed";
     order.executedAt = executedAt;
     await order.save();
@@ -169,7 +170,7 @@ const executeSingleAMOOrder = async (order) => {
 };
 
 export const executeAMOorders = async () => {
-  console.log("Executing AMO orders...");
+  logger.info("Executing AMO orders...");
 
   const pendingOrders = await OrderHistory.findAll({
     where: {
@@ -179,19 +180,19 @@ export const executeAMOorders = async () => {
     },
     order: [["createdAt", "ASC"]],
   });
-  console.log(`Found ${pendingOrders.length} pending AMO orders.`);
+  logger.info(`Found ${pendingOrders.length} pending AMO orders.`);
 
   for (const order of pendingOrders) {
     try {
       await executeSingleAMOOrder(order);
     } catch (error) {
-      console.error(`Failed to execute AMO order ${order.id}:`, error);
+      logger.error(`Failed to execute AMO order ${order.id}:`, error);
     }
   }
 };
 
 export const settleIntradayTrades = async () => {
-  console.log("Executing Intraday Trades Settlement...");
+  // logger.info("Executing Intraday Trades Settlement...");
 
   try {
     const openIntradayTrades = await Trade.findAll({
@@ -202,11 +203,11 @@ export const settleIntradayTrades = async () => {
     });
 
     if (!openIntradayTrades || openIntradayTrades.length === 0) {
-      console.log("No open intraday trades found to settle.");
+      // console.log("No open intraday trades found to settle.");
       return;
     }
 
-    console.log(`Found ${openIntradayTrades.length} open intraday trades.`);
+    logger.info(`Found ${openIntradayTrades.length} open intraday trades.`);
 
     const uniqueKeys = [
       ...new Set(openIntradayTrades.map((t) => t.instrument_key)),
@@ -246,7 +247,7 @@ export const settleIntradayTrades = async () => {
       const currentPrice = ltpMap[instrument_key];
 
       if (!currentPrice) {
-        console.error(
+        logger.error(
           `Skipping settlement for ${instrument_key}: unable to fetch LTP`,
         );
         continue;
@@ -275,10 +276,10 @@ export const settleIntradayTrades = async () => {
         );
 
         let totalFundsChange = 0;
-        console.log(
-          "list of trades",
-          trades.map((trade) => `${trade.id},`),
-        );
+        // console.log(
+        //   "list of trades",
+        //   trades.map((trade) => `${trade.id},`),
+        // );
 
         for (const trade of trades) {
           const exitValue =
@@ -305,14 +306,14 @@ export const settleIntradayTrades = async () => {
           await userRecord.save();
         }
       } catch (error) {
-        console.error(
+        logger.error(
           `Failed to settle intraday trades for group ${key}:`,
           error,
         );
       }
     }
-    console.log("Intraday trades settlement completed.");
+    logger.info("Intraday trades settlement completed.");
   } catch (error) {
-    console.error("Failed to execute settleIntradayTrades:", error);
+    logger.error("Failed to execute settleIntradayTrades:", error);
   }
 };

@@ -8,6 +8,7 @@ import { getLTP } from "../services/upstox.service.js";
 import dbManager from "../config/DatabaseManager.js";
 import excel from "node-excel-export";
 import createNotification from "../services/userNotification.service.js";
+import logger from "../utils/errorLogger.js";
 
 //validate all inputs ✅
 //check if user has enough balance ✅
@@ -88,7 +89,6 @@ export const registerTrade = async (req, resp) => {
       }
     }
   }
-  console.log(currentPrice);
 
   // executedAt if trade is placed in market hours else null
   const executedAt = marketOpen ? moment().format("YYYY-MM-DD HH:mm:ss") : null;
@@ -121,7 +121,6 @@ export const registerTrade = async (req, resp) => {
       (acc, ct) => acc + ct.quantity,
       0,
     );
-    console.log(totalComplementaryQuantity, quantity);
     if (
       trade_duration === "delivery" &&
       trade_type === "sell" &&
@@ -446,11 +445,6 @@ export const settleTrade = async (req, res) => {
       },
     });
 
-    //for debug
-    console.log(
-      "trade id",
-      trades.map((trade) => ` ${trade.id} ,`),
-    );
     const stockInfo = await Stock.findOne({
       where: {
         instrument_key: instrument_key,
@@ -487,7 +481,7 @@ export const settleTrade = async (req, res) => {
 
     // in case of closed market make an AMO order and exit
     if (!marketOpen) {
-      console.log("market is closed , placing AMO order");
+      logger.info("market is closed , placing AMO order");
       createNotification(
         user.id,
         "info",
@@ -576,7 +570,7 @@ export const settleTrade = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("settleTrade error:", error);
+    logger.error("settleTrade error:", error);
     return res
       .status(500)
       .json({ message: "Internal server error", success: false });
@@ -656,7 +650,7 @@ export const getPortfolioStats = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("getPortfolioStats error:", error);
+    logger.error("getPortfolioStats error:", error);
     return res
       .status(500)
       .json({ message: "Internal server error", success: false });
@@ -689,8 +683,6 @@ export const downloadUserTradeHistory = async (req, res) => {
         ...trade.Stock,
       };
     });
-    console.log(flatTradeHistory[0]);
-    console.log(flatTradeHistory[flatTradeHistory.length - 1]);
 
     //Here you specify the export structure
     const specification = {
@@ -755,12 +747,12 @@ export const downloadUserTradeHistory = async (req, res) => {
         data: flatTradeHistory, // <-- Report data
       },
     ]);
-    // console.log(userName);
+
     // You can then return this straight
     res.attachment(`${userName.name} Trade History.xlsx`); // This is sails.js specific (in general you need to set headers)
     return res.status(200).send(report);
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     return res
       .status(500)
       .json({ message: "Internal server error", success: false });
@@ -852,8 +844,6 @@ export const downloadUserAnalyticsReport = async (req, res) => {
       loss_trades: { displayName: "Loss Trades", headerStyle: {}, width: 100 },
     };
 
-    console.log(analyticsData.pnl_bar_chart?.all_trades);
-
     const report = excel.buildExport([
       {
         name: "P_and_L_Summary",
@@ -897,7 +887,7 @@ export const downloadUserAnalyticsReport = async (req, res) => {
     res.attachment(`${userName.name} Analytics Report.xlsx`);
     return res.status(200).send(report);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return res
       .status(500)
       .json({ message: "Internal server error", success: false });

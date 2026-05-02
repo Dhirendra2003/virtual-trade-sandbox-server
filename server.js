@@ -12,6 +12,7 @@ import Trade from "./src/models/Trade.js";
 import OrderHistory from "./src/models/Order.js";
 import Notification from "./src/models/Notification.js";
 import startCronJobs from "./src/cron/index.js";
+import logger from "./src/utils/errorLogger.js";
 
 cron.schedule("16 9 * * 1-5", async () => {
   await startCronJobs("executeAMO");
@@ -24,7 +25,7 @@ cron.schedule("0 9 * * 0", async () => {
   await startCronJobs("sendWeeklyReports");
 });
 
-console.log("Cron worker started");
+logger.info("Cron worker started");
 
 // Define Associations
 User.hasMany(Watchlist, { foreignKey: "user_id" });
@@ -57,6 +58,6 @@ DatabaseManager.connect()
     });
   })
   .catch((err) => {
-    console.error("Failed to connect to the database:", err);
+    logger.error("Failed to connect to the database:", err);
     process.exit(1);
   });

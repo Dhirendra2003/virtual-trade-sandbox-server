@@ -1,4 +1,5 @@
 import { getMarketStatusAPI } from "../services/upstox.service.js";
+import logger from "../utils/errorLogger.js";
 import {
   executeAMOorders,
   settleIntradayTrades,
@@ -7,7 +8,7 @@ import { sendWeeklyReports } from "./jobs/weeklyReportCronjob.js";
 
 const startCronJobs = async (cronType) => {
   try {
-    console.log("Starting cron jobs...", cronType);
+    // console.log("Starting cron jobs...", cronType);
 
     // Weekly report does not depend on market status — run independently
     if (cronType === "sendWeeklyReports") {
@@ -22,7 +23,7 @@ const startCronJobs = async (cronType) => {
       await settleIntradayTrades();
     }
     if (!isMarketOpen) {
-      console.log("Skipping AMO execution because market is closed");
+      logger.info("Skipping AMO execution because market is closed");
       return;
     }
 
@@ -30,7 +31,7 @@ const startCronJobs = async (cronType) => {
       await executeAMOorders();
     }
   } catch (error) {
-    console.error("Error executing cron jobs:", error);
+    logger.error("Error executing cron jobs:", error);
   }
 };
 export default startCronJobs;

@@ -4,6 +4,7 @@ import checkLoggedIn from "../middleware/auth.middleware.js";
 import { getAccessToken, getRefreshToken } from "../utils/generateTokens.js";
 import { COOKIE_OPTIONS, ENV_VARIABLES } from "../utils/constants.js";
 import createNotification from "../services/userNotification.service.js";
+import logger from "../utils/errorLogger.js";
 
 const router = express.Router();
 
@@ -59,7 +60,7 @@ router.get(
           "http://localhost:5173/authenticate/google",
       );
     } catch (error) {
-      console.log("Google login error:", error);
+      logger.error("Google login error:", error);
       res.redirect(
         `${ENV_VARIABLES.FRONTEND_URL || "http://localhost:5173"}/authenticate/google?error=google_failed`,
       );
@@ -121,7 +122,7 @@ router.get(
           "http://localhost:5173/authenticate/facebook",
       );
     } catch (error) {
-      console.log("Facebook login error:", error);
+      logger.error("Facebook login error:", error);
       res.redirect(
         `${ENV_VARIABLES.FRONTEND_URL || "http://localhost:5173"}/authenticate/facebook?error=facebook_failed`,
       );

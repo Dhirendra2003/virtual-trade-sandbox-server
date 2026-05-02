@@ -15,6 +15,7 @@ import watchlistRoute from "./routes/watchlist.routes.js";
 import tradeRoute from "./routes/trade.routes.js";
 import notificationRoute from "./routes/notifications.route.js";
 import paymentRoute from "./routes/payment.routes.js";
+import logger from "./utils/errorLogger.js";
 
 const app = express();
 const frontendURL = ENV_VARIABLES.FRONTEND_URL;
@@ -47,7 +48,7 @@ app.get("/", (req, res) => {
 
 // for all unkown routes
 app.all(/.*/, (req, res) => {
-  console.log(req.originalUrl);
+  logger.info(req.originalUrl);
   const error = new CustomError(
     `(${req.method}) ${req.originalUrl} Route not found`,
     404,

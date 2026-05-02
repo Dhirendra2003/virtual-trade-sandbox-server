@@ -16,6 +16,7 @@ import {
   fetchTrendingStocks,
 } from "../services/indStockAPI.service.js";
 import getGeminiResponse from "../services/gemini.service.js";
+import logger from "../utils/errorLogger.js";
 
 export const searchStocks = async (req, resp) => {
   const { search } = req.query;
@@ -81,9 +82,7 @@ export const getStockChartData = async (req, resp) => {
   let modifiedData = [];
   const intradayData = await getIntradayCandles(stockCode, timeFrame).then(
     (responseData) => {
-      // console.log("API Response:", responseData); // Debug log
       responseData?.data?.candles?.map((candle) => {
-        // console.log(candle[0].slice(0, 10));
         days.add(candle[0].slice(0, 10));
       });
       modifiedData.push(
@@ -101,9 +100,7 @@ export const getStockChartData = async (req, resp) => {
   );
   const data = await getHistoricalCandles(stockCode, timeFrame, from, to).then(
     (responseData) => {
-      // console.log("API Response:", responseData); // Debug log
       responseData?.data?.candles?.map((candle) => {
-        // console.log(candle[0].slice(0, 10));
         days.add(candle[0].slice(0, 10));
       });
       modifiedData.push(
@@ -202,13 +199,12 @@ export const getTrendingStocks = async (req, resp) => {
     topGainers.map(async (stock) => {
       // Replace non-alphanumeric symbols with spaces in JS
       const searchName = stock.company_name.replace(/[^a-zA-Z0-9]+/g, " ");
-      // console.log("### searchName", searchName);
+
       // check if stock name is more than 3 words
       let secondName;
       const words = searchName.split(" ");
       if (words.length >= 3) {
         secondName = words.slice(0, 2).join(" ");
-        // console.log("### secondName", secondName);
       }
       const stockDetails = await Stock.findOne({
         where: {
@@ -225,7 +221,6 @@ export const getTrendingStocks = async (req, resp) => {
         raw: true,
       });
 
-      // console.log(`${stock.company_name} : ${stockDetails?.trading_symbol}`);
       return {
         ...stock,
         instrument_key: stockDetails?.instrument_key,
@@ -237,13 +232,12 @@ export const getTrendingStocks = async (req, resp) => {
     topLosers.map(async (stock) => {
       // Replace non-alphanumeric symbols with spaces in JS
       const searchName = stock.company_name.replace(/[^a-zA-Z0-9]+/g, " ");
-      // console.log("### searchName", searchName);
+
       // check if stock name is more than 3 words
       let secondName;
       const words = searchName.split(" ");
       if (words.length >= 3) {
         secondName = words.slice(0, 2).join(" ");
-        // console.log("### secondName", secondName);
       }
       const stockDetails = await Stock.findOne({
         where: {
@@ -260,7 +254,6 @@ export const getTrendingStocks = async (req, resp) => {
         raw: true,
       });
 
-      // console.log(`${stock.company_name} : ${stockDetails?.trading_symbol}`);
       return {
         ...stock,
         instrument_key: stockDetails?.instrument_key,
@@ -346,7 +339,7 @@ If real-time data is unavailable, use most recent closing price and clearly base
     );
     return resp.status(200).json({ data: modifiedData, success: true });
   } catch (error) {
-    console.error("Gemini Error:", error);
+    logger.error("Gemini Error:", error);
     return resp.status(500).json({
       message: "Failed to generate recommendations",
       success: false,

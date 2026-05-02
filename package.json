@@ -12,6 +12,8 @@
   "license": "ISC",
   "dependencies": {
     "@google/genai": "^1.48.0",
+    "@logtail/node": "^0.5.8",
+    "@logtail/winston": "^0.5.8",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.9.0",
     "cookie-parser": "^1.4.7",
@@ -32,6 +34,7 @@
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.7",
     "sequelize-cli": "^6.6.5",
-    "stripe": "^22.0.2"
+    "stripe": "^22.0.2",
+    "winston": "^3.19.0"
   }
 }

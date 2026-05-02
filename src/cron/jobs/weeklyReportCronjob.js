@@ -5,6 +5,7 @@ import dbManager from "../../config/DatabaseManager.js";
 import { sendEmail } from "../../services/mailService.js";
 import weeklyReportMail from "../../mailTemplates/weekly-report-mail.js";
 import getGeminiResponse from "../../services/gemini.service.js";
+import logger from "../../utils/errorLogger.js";
 
 // ── Helper: build portfolio stats for a single user (mirrors getPortfolioStats) ──
 const buildPortfolioStats = async (userId, userFunds, userActualFunds) => {
@@ -56,7 +57,7 @@ const buildPortfolioStats = async (userId, userFunds, userActualFunds) => {
       positions_count: allPositions.length,
     };
   } catch (err) {
-    console.error(
+    logger.error(
       `[WeeklyReport] buildPortfolioStats failed for user ${userId}:`,
       err,
     );
@@ -81,7 +82,7 @@ const buildAnalyticsData = async (userId) => {
       consistency_heatmap: trades[3].sp_consistency_heatmap,
     };
   } catch (err) {
-    console.error(
+    logger.error(
       `[WeeklyReport] buildAnalyticsData failed for user ${userId}:`,
       err,
     );
@@ -128,14 +129,14 @@ Return a plain text string only — no JSON, no markdown, no bullet points.
       return raw?.trim() ?? "";
     }
   } catch (err) {
-    console.error("[WeeklyReport] Gemini summary failed:", err);
+    logger.error("[WeeklyReport] Gemini summary failed:", err);
     return "Your trading journey continues! Review your trades this week and look for patterns — consistency is the key to long-term success.";
   }
 };
 
 // ── Main export ──────────────────────────────────────────────────────────────
 export const sendWeeklyReports = async () => {
-  console.log("[WeeklyReport] Starting weekly report job...");
+  // console.log("[WeeklyReport] Starting weekly report job...");
 
   // Week range label  e.g. "Apr 28 – May 2, 2026"
   const weekStart = moment().subtract(7, "days").format("MMM D");
@@ -161,7 +162,7 @@ export const sendWeeklyReports = async () => {
     }
 
     try {
-      console.log(
+      logger.info(
         `[WeeklyReport] Processing user ${user.id} (${user.email})...`,
       );
 
@@ -199,17 +200,17 @@ export const sendWeeklyReports = async () => {
       );
 
       sent++;
-      console.log(`[WeeklyReport] ✓ Sent to ${user.email}`);
+      logger.info(`[WeeklyReport] ✓ Sent to ${user.email}`);
     } catch (err) {
       failed++;
-      console.error(
+      logger.error(
         `[WeeklyReport] ✗ Failed for user ${user.id} (${user.email}):`,
         err,
       );
     }
   }
 
-  console.log(
+  logger.info(
     `[WeeklyReport] Done — sent: ${sent}, skipped: ${skipped}, failed: ${failed}`,
   );
 };

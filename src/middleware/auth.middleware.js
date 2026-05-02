@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { ENV_VARIABLES } from "../utils/constants.js";
+import logger from "../utils/errorLogger.js";
 const checkLoggedIn = async (req, response, next) => {
   try {
     const accesstoken = req.cookies.accesstoken;
@@ -23,7 +24,7 @@ const checkLoggedIn = async (req, response, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     if (error.name === "TokenExpiredError") {
       return response.status(401).json({
         message: "Access token expired",
@@ -32,7 +33,6 @@ const checkLoggedIn = async (req, response, next) => {
       });
     }
 
-    console.log(error);
     return response.status(401).json({
       message: "Invalid token",
       success: false,
