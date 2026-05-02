@@ -13,15 +13,17 @@ export const DURATIONS = {
 export const COOKIE_OPTIONS = {
   ACCESS_TOKEN_COOKIE_OPTIONS: {
     httpOnly: true,
+    // Must be true in production for HTTPS
     secure: isProduction,
-    sameSite: "lax",
+    // "none" is required if frontend and backend are on different domains
+    sameSite: isProduction ? "none" : "lax",
     maxAge: DURATIONS.ACCESS_TOKEN_COOKIE_DURATION,
   },
 
   REFRESH_TOKEN_COOKIE_OPTIONS: {
     httpOnly: true,
     secure: isProduction,
-    sameSite: "lax",
+    sameSite: isProduction ? "none" : "lax",
     maxAge: DURATIONS.REFRESH_TOKEN_COOKIE_DURATION,
   },
 };
