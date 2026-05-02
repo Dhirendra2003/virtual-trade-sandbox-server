@@ -1,4 +1,4 @@
-import { ENV_VARIABLES } from "../utils/constants.js";
+import { COOKIE_OPTIONS, ENV_VARIABLES } from "../utils/constants.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
@@ -180,18 +180,16 @@ export const refreshAccessToken = async (req, resp) => {
 
   return resp
     .status(200)
-    .cookie("accesstoken", newAccessToken, {
-      httpOnly: true,
-      secure: false, // Only send cookie over HTTPS
-      sameSite: "lax", // Allows cross-origin requests
-      maxAge: DURATIONS.ACCESS_TOKEN_COOKIE_DURATION,
-    })
-    .cookie("refreshtoken", newRefreshToken, {
-      httpOnly: true,
-      secure: false, // Only send cookie over HTTPS
-      sameSite: "lax", // Allows cross-origin requests
-      maxAge: DURATIONS.REFRESH_TOKEN_COOKIE_DURATION,
-    })
+    .cookie(
+      "accesstoken",
+      newAccessToken,
+      COOKIE_OPTIONS.ACCESS_TOKEN_COOKIE_OPTIONS,
+    )
+    .cookie(
+      "refreshtoken",
+      newRefreshToken,
+      COOKIE_OPTIONS.REFRESH_TOKEN_COOKIE_OPTIONS,
+    )
     .json({ message: "Access token refreshed", success: true });
 };
 
