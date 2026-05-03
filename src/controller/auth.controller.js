@@ -120,18 +120,16 @@ export const login = async (req, resp) => {
     );
     return resp
       .status(200)
-      .cookie("accesstoken", accessToken, {
-        httpOnly: true,
-        secure: false, // Only send cookie over HTTPS
-        sameSite: "lax", // Allows cross-origin requests
-        maxAge: 1 * 60 * 1000,
-      })
-      .cookie("refreshtoken", refreshToken, {
-        httpOnly: true,
-        secure: false, // Only send cookie over HTTPS
-        sameSite: "lax", // Allows cross-origin requests
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      })
+      .cookie(
+        "accesstoken",
+        accessToken,
+        COOKIE_OPTIONS.ACCESS_TOKEN_COOKIE_OPTIONS,
+      )
+      .cookie(
+        "refreshtoken",
+        refreshToken,
+        COOKIE_OPTIONS.REFRESH_TOKEN_COOKIE_OPTIONS,
+      )
       .json({ user: userObject, message: "login success", success: true });
   } else {
     return resp
