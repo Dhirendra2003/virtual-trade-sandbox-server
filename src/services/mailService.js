@@ -48,32 +48,47 @@ oAuth2Client.setCredentials({ refresh_token: refreshToken });
 
 export const sendEmail = async (to, subject, text, html) => {
   try {
-    const accessToken = await oAuth2Client.getAccessToken();
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.EMAIL_USER,
-        clientId: clientID,
-        clientSecret: clientSecret,
-        refreshToken: refreshToken,
-        accessToken: accessToken,
-      },
-      tls: {
-        rejectUnauthorized: false, // Helps with some hosting provider restrictions
+    const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
+
+    // Construct the email string in standard MIME format
+    const subjectBase64 = Buffer.from(subject).toString("base64");
+    const messageParts = [
+      `From: "Virtual Trade Sandbox" <${process.env.EMAIL_USER}>`,
+      `To: ${to}`,
+      `Subject: =?utf-8?B?${subjectBase64}?=`,
+      "MIME-Version: 1.0",
+    ];
+
+    if (html) {
+      messageParts.push("Content-Type: text/html; charset=utf-8");
+      messageParts.push("");
+      messageParts.push(html);
+    } else {
+      messageParts.push("Content-Type: text/plain; charset=utf-8");
+      messageParts.push("");
+      messageParts.push(text);
+    }
+
+    const message = messageParts.join("\r\n");
+    
+    // Encode in base64url format
+    const encodedMessage = Buffer.from(message)
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
+    // Send the email via HTTP
+    const res = await gmail.users.messages.send({
+      userId: "me",
+      requestBody: {
+        raw: encodedMessage,
       },
     });
 
-    const info = await transporter.sendMail({
-      from: `"Virtual Trade Sandbox" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      text,
-      html,
-    });
-    logger.info("Message sent: %s", info.messageId);
+    logger.info("Message sent via Gmail HTTP API: %s", res.data.id);
     console.log("Email sent successfully");
-    return info;
+    return res.data;
   } catch (error) {
     console.log("Error in sending email : ", error);
     logger.error("Error sending email:", error);
