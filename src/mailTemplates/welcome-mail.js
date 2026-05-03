@@ -1,6 +1,6 @@
-const welcomMail = (
-  userName,
-) => `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+const welcomMail = (userName) => {
+  const APP_BASE_URL = process.env.FRONTEND_URL;
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -347,7 +347,7 @@ const welcomMail = (
                   class="content-padding"
                   style="padding: 20px 30px 60px 30px"
                 >
-                  <a href="#" class="cta-button">Start Trading Now</a>
+                  <a href="${APP_BASE_URL}" class="cta-button">Start Trading Now</a>
                   <p style="color: #a1a1aa; font-size: 12px; margin-top: 20px">
                     No credit card required. Pure learning.
                   </p>
@@ -387,5 +387,6 @@ const welcomMail = (
     </center>
   </body>
 </html>`;
+};
 
 export default welcomMail;
