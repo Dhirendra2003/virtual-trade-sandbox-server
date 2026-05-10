@@ -9,6 +9,8 @@ const marketStatusMiddleware = async (req, response, next) => {
       .json({ isMarketOpen: false, message: "no data found", success: false });
   }
   req.isMarketOpen = data?.data?.status === "NORMAL_OPEN";
+  // req.isMarketOpen = true; // to simulate open market
+
   next();
 };
 export default marketStatusMiddleware;
