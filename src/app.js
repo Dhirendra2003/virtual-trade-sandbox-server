@@ -15,6 +15,7 @@ import watchlistRoute from "./routes/watchlist.routes.js";
 import tradeRoute from "./routes/trade.routes.js";
 import notificationRoute from "./routes/notifications.route.js";
 import paymentRoute from "./routes/payment.routes.js";
+import { performMaintenanceDbActivity } from "./controller/maintenance.controller.js";
 import logger from "./utils/errorLogger.js";
 
 const app = express();
@@ -42,8 +43,13 @@ app.use("/api/v1/trade/", tradeRoute);
 app.use("/api/v1/notification/", notificationRoute);
 app.use("/api/v1/payment/", paymentRoute);
 
-app.get("/", (req, res) => {
-  res.json("Hello, World!");
+app.get("/", async (req, res, next) => {
+  try {
+    await performMaintenanceDbActivity();
+    return res.status(204).json("Hello, World!");
+  } catch (error) {
+    return next(error);
+  }
 });
 
 // for all unkown routes
