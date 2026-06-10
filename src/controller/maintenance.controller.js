@@ -5,4 +5,5 @@ export const performMaintenanceDbActivity = async () => {
   const sequelize = dbManager.getInstance();
   await dbManager.connect();
   await sequelize.query("SELECT 1");
+  console.log("Maintenance DB activity performed successfully");
 };

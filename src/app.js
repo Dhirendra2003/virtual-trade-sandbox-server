@@ -43,12 +43,16 @@ app.use("/api/v1/trade/", tradeRoute);
 app.use("/api/v1/notification/", notificationRoute);
 app.use("/api/v1/payment/", paymentRoute);
 
-app.get("/", async (req, res, next) => {
+app.get("/health", async (req, res) => {
   try {
     await performMaintenanceDbActivity();
-    return res.status(204).json("Hello, World!");
+    return res.status(200).json({
+      message: "Health check passed.",
+      success: true,
+    });
   } catch (error) {
-    return next(error);
+    logger.error("Health check failed:", error);
+    return res.status(500).json({ msg: "Health check failed" });
   }
 });
 
